@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shapes and dims — TARA RL</title>
+<style>:root{--teal:#0E7C7B;--teal-lt:#DCEEED;--coral:#E4572E;--coral-lt:#FBE4DC;--purple:#6C4AB6;--purple-lt:#EAE3F7;--amber:#B7791F;--amber-lt:#FDF1D6;--blue:#2F6DB5;--blue-lt:#DDE8F6;--ink:#1A1A1A;--muted:#4F5A63;--line:#C9D0D5;--bg:#F2F4F5;--code:#1E1E2E;--grey:#8A949C;--page:#FFFFFF}
+*{box-sizing:border-box}
+html{font-size:20px}
+@media (min-width:1700px){html{font-size:23px}}
+@media (max-width:900px){html{font-size:16px}}
+body{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif;margin:0;background:var(--page);color:var(--ink);line-height:1.35}
+.wrap{max-width:1800px;margin:0 auto;padding:20px 30px 40px}
+.kicker{font-size:.78rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
+h1{font-size:1.9rem;margin:.1em 0 .15em}
+.sub{color:var(--muted);font-size:1.02rem;margin:0 0 .6rem;max-width:80ch}
+.tabs{display:flex;flex-wrap:wrap;gap:10px;margin:.5rem 0 1rem;align-items:center}
+.tabs button{font:inherit;font-size:.95rem;font-weight:700;padding:.45rem .9rem;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.tabs button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+section.tab{display:none}
+section.tab.on{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:24px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.stage{border:2px solid var(--line);border-radius:18px;padding:12px;background:#fff;position:relative}
+.stage canvas,.stage svg{width:100%;height:auto;display:block}
+.side{display:flex;flex-direction:column;gap:14px}
+.placard{border-radius:16px;padding:14px 18px;background:var(--bg);font-size:1.02rem}
+.placard h3{margin:0 0 .3rem;font-size:1.15rem}
+.placard p{margin:.25rem 0}
+.placard.teal{background:var(--teal-lt)}.placard.teal h3{color:var(--teal)}
+.placard.coral{background:var(--coral-lt)}.placard.coral h3{color:var(--coral)}
+.placard.purple{background:var(--purple-lt)}.placard.purple h3{color:var(--purple)}
+.placard.amber{background:var(--amber-lt)}.placard.amber h3{color:var(--amber)}
+.placard.dark{background:var(--code);color:#E4E4EF}.placard.dark h3{color:#fff}
+.ctl{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;font-size:.98rem;margin:10px 0}
+.ctl label{font-weight:700;color:var(--muted)}
+.ctl input[type=range]{width:180px;accent-color:var(--teal)}
+.ctl select{font:inherit;padding:.25rem .4rem;border-radius:8px;border:2px solid var(--line)}
+button.b{font:inherit;font-size:.98rem;font-weight:700;padding:.45rem .95rem;border-radius:12px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+button.b.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+button.b.coral{background:var(--coral);border-color:var(--coral);color:#fff}
+button.b:disabled{opacity:.4;cursor:default}
+.mono,code{font-family:"Courier New","DejaVu Sans Mono",monospace}
+code{background:var(--bg);padding:0 .25em;border-radius:5px}
+.placard.dark code{background:#2C2C40}
+.stat{display:flex;gap:10px;flex-wrap:wrap}
+.stat div{flex:1;min-width:110px;border-radius:14px;padding:8px 12px;background:var(--bg)}
+.stat b{display:block;font-size:1.55rem;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.85rem}
+.note{color:var(--grey);font-size:.85rem;font-style:italic}
+table.t{border-collapse:separate;border-spacing:3px;font-size:.92rem;font-variant-numeric:tabular-nums}
+table.t td,table.t th{padding:4px 8px;border-radius:7px;text-align:center}
+table.t th{color:var(--muted);font-weight:700}
+.chk{display:inline-flex;gap:6px;align-items:center;font-weight:700;color:var(--muted);cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--teal)}
+.keys{position:fixed;right:14px;bottom:10px;font-size:.75rem;color:var(--grey);background:#fff;padding:4px 10px;border-radius:10px;border:1px solid var(--line)}
+svg text{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.9rem;color:var(--muted);margin:6px 2px}
+.legend i{display:inline-block;width:16px;height:16px;border-radius:4px;vertical-align:-3px;margin-right:5px}
+canvas.hm{cursor:crosshair}
+
+.tabs.grouped{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:flex-start}
+.tabs.grouped .grp{display:flex;flex-direction:column;gap:5px}
+.tabs.grouped .grp>span{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tabs.grouped .grp>div{display:flex;gap:6px;flex-wrap:wrap}
+.tabs.grouped button{font-size:.9rem;padding:.4rem .75rem}
+.tabs.grouped button .n{display:inline-block;min-width:1.3em;margin-right:.35em;color:var(--teal);font-variant-numeric:tabular-nums}
+.tabs.grouped button.on .n{color:#fff}
+</style></head><body>
+<div class="wrap">
+<div class="kicker">TARA · RL week 1 · interactive 13 · coding help</div>
+<h1>Shapes and dims, for coding the notebook</h1>
+<p class="sub">Most VPG bugs are a dim in the wrong place. Each tab is one tensor move from the notebook, on small numbers you can see. E = num_envs, T = num_steps.</p>
+<div class="tabs">
+  <button data-tab="stack" class="on"><span class="n">1</span>stack & split (Rollout)</button>
+  <button data-tab="gather"><span class="n">2</span>gather (get_actions, compute_logprobs)</button>
+  <button data-tab="baseline"><span class="n">3</span>mean over a dim (baseline)</button>
+  <button data-tab="returns"><span class="n">4</span>returns calculator</button>
+  <button data-tab="trace"><span class="n">5</span>shape tracer (compute_loss)</button>
+</div>
+
+<section class="tab on" id="stack">
+ <div class="grid">
+  <div class="stage">
+   <div class="ctl"><label>E</label><input type="range" id="st_E" min="2" max="5" value="3"><span id="st_Ev"></span>
+     <label>T</label><input type="range" id="st_T" min="2" max="6" value="4"><span id="st_Tv"></span></div>
+   <div class="ctl"><label>stack along</label>
+     <button class="b primary" data-dim="1" id="st_d1">dim = 1 (correct)</button>
+     <button class="b" data-dim="0" id="st_d0">dim = 0 (bug)</button>
+     <label>batch_size</label><input type="range" id="st_B" min="1" max="5" value="2"><span id="st_Bv"></span></div>
+   <div id="st_out"></div>
+  </div>
+  <div class="side">
+   <div class="placard teal"><h3>What add_step stores</h3><p>Every step appends one tensor of shape <code>(E,)</code> — one value per env — to a list. After T steps the list has T of them.</p></div>
+   <div class="placard"><h3>get()</h3><p><code>t.stack(list, dim=1)</code> puts time along columns: <b>(E, T)</b>, one row per env. <code>dim=0</code> gives <b>(T, E)</b>: rows and columns swapped, and every later function reads the wrong axis.</p></div>
+   <div class="placard purple"><h3>get_batches()</h3><p><code>t.split(x, batch_size, dim=0)</code> cuts along <b>envs</b>, so each batch keeps whole rows — whole games stay together.</p></div>
+  </div>
+ </div>
+</section>
+
+<section class="tab" id="gather">
+ <div class="grid">
+  <div class="stage">
+   <div class="ctl"><button class="b primary" id="ga_new">new observations</button><button class="b" id="ga_resample">sample actions again</button>
+     <label><input type="checkbox" id="ga_bug"> forget unsqueeze(-1)</label></div>
+   <div id="ga_out"></div>
+  </div>
+  <div class="side">
+   <div class="placard teal"><h3>The four lines</h3><pre class="mono">log_probs = F.log_softmax(logits, dim=-1)   # (E, 2)
+actions = t.multinomial(log_probs.exp(), 1).squeeze(-1)  # (E,)
+lp = log_probs.gather(-1, actions.unsqueeze(-1))  # (E, 1)
+lp = lp.squeeze(-1)                          # (E,)</pre></div>
+   <div class="placard"><h3>Why unsqueeze?</h3><p><code>gather</code> needs the index to have the same number of dims as the source. <code>actions</code> is (E,), the source is (E, 2), so make it (E, 1) first — then squeeze the result back to (E,).</p></div>
+   <div class="placard amber"><h3>compute_logprobs</h3><p>Same move on (E, T, 2) with actions (E, T): unsqueeze to (E, T, 1), gather on dim −1, squeeze back to (E, T).</p></div>
+  </div>
+ </div>
+</section>
+
+<section class="tab" id="baseline">
+ <div class="grid">
+  <div class="stage">
+   <div class="ctl"><label>mean over</label>
+     <button class="b primary" data-bd="0" id="bl_0">dim = 0 (over envs) ✓</button>
+     <button class="b" data-bd="1" id="bl_1">dim = 1 (over time)</button>
+     <button class="b" data-bd="all" id="bl_a">all (no dim)</button>
+     <button class="b" id="bl_new">new returns</button></div>
+   <div id="bl_out"></div>
+  </div>
+  <div class="side">
+   <div class="placard teal"><h3>The notebook's baseline</h3><p><code>returns.mean(dim=0, keepdim=True)</code>: one number per <b>timestep</b>, averaged over the envs → shape <b>(1, T)</b>. Subtracting broadcasts it down every row.</p></div>
+   <div class="placard"><h3>Why per timestep?</h3><p>Early steps have big reward-to-go, late steps small. Comparing each cell with other envs <b>at the same t</b> is "compared with usual, here and now".</p></div>
+   <div class="placard coral"><h3>keepdim</h3><p>Without it you get shape (T,). It still broadcasts here, but (E,) from dim=1 would not line up — keepdim makes the intent explicit.</p></div>
+  </div>
+ </div>
+</section>
+
+<section class="tab" id="returns">
+ <div class="grid">
+  <div class="stage">
+   <p class="sub" style="margin:0 0 .5rem">Type your own test case. Compare with what your <code>compute_returns</code> prints for the same row.</p>
+   <div class="ctl"><label>rewards</label><input id="rc_r" class="txtin" value="1, 1, 1, 1, 1"></div>
+   <div class="ctl"><label>dones</label><input id="rc_d" class="txtin" value="0, 1, 0, 0, 0"></div>
+   <div class="ctl"><label>γ</label><input id="rc_g" class="txtin" style="width:6em" value="0.5">
+     <label><input type="checkbox" id="rc_bug"> show the no-mask bug too</label></div>
+   <div id="rc_out"></div>
+  </div>
+  <div class="side">
+   <div class="placard teal"><h3>The loop</h3><pre class="mono">G = zeros(E)
+for i in reversed(range(T)):
+    G = rewards[:, i] + gamma * G * (~dones[:, i])
+    returns[:, i] = G</pre></div>
+   <div class="placard"><h3>Read the table right to left</h3><p>Each G is this step's reward plus γ × the G to its right — unless this step is <b>done</b>, which blocks the future (the next cell belongs to a new game).</p></div>
+   <div class="placard amber"><h3>Last column</h3><p>The window ends: G starts from 0 even if the game was still running (truncation by the rollout).</p></div>
+  </div>
+ </div>
+</section>
+
+<section class="tab" id="trace">
+ <div class="grid">
+  <div class="stage">
+   <div class="ctl"><label>num_envs E</label><input id="tr_E" class="txtin" style="width:5em" value="32">
+     <label>num_steps T</label><input id="tr_T" class="txtin" style="width:5em" value="500">
+     <label>obs dim</label><input id="tr_O" class="txtin" style="width:4em" value="4">
+     <label>actions</label><input id="tr_A" class="txtin" style="width:4em" value="2"></div>
+   <div id="tr_out"></div>
+  </div>
+  <div class="side">
+   <div class="placard teal"><h3>How to use it</h3><p>Add <code>print(x.shape)</code> after each line of your <code>compute_loss</code> and compare with this table. The first mismatch is your bug.</p></div>
+   <div class="placard"><h3>The one scalar</h3><p>Everything is (E, T) until the final <code>.mean()</code>, which gives a 0-dim tensor: <code>joy</code>. If joy is not a scalar, a mean is missing.</p></div>
+  </div>
+ </div>
+</section>
+</div>
+
+<style>
+.tabs button .n{margin-right:.45em;color:var(--teal)}
+.tabs button.on .n{color:#fff}
+.mono{font-family:Consolas,Menlo,monospace;font-size:.82rem;white-space:pre;margin:.3rem 0;overflow-x:auto}
+code{font-family:Consolas,Menlo,monospace;font-size:.92em;background:#E9ECEF;padding:0 .2em;border-radius:4px}
+.txtin{font:inherit;font-family:Consolas,Menlo,monospace;padding:.3rem .5rem;border-radius:8px;border:2px solid var(--line);width:16em}
+table.t{border-collapse:separate;border-spacing:4px;margin:.4rem 0}
+table.t td,table.t th{min-width:3.2em;text-align:center;padding:.35rem .4rem;border-radius:8px;font-variant-numeric:tabular-nums;font-size:.95rem}
+table.t th{color:var(--muted);font-weight:700;background:none}
+table.t td{background:var(--bg)}
+td.hl{background:var(--teal-lt)!important;color:var(--teal);font-weight:700}
+td.pick{background:var(--teal)!important;color:#fff;font-weight:700}
+td.bad{background:var(--coral-lt)!important;color:var(--coral);font-weight:700}
+td.done{box-shadow:inset -5px 0 0 var(--coral)}
+.shape{display:inline-block;font-family:Consolas,Menlo,monospace;font-weight:700;color:var(--purple);background:var(--purple-lt);border-radius:8px;padding:.1rem .5rem;margin-left:.4rem}
+.err{color:var(--coral);font-weight:700;font-family:Consolas,Menlo,monospace}
+.h4{font-weight:700;margin:.8rem 0 .2rem}
+.blk{display:inline-block;vertical-align:top;margin-right:18px}
+</style>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+// tabs
+function showTab(id){$$('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));$$('section.tab').forEach(s=>s.classList.toggle('on',s.id===id));}
+$$('.tabs button').forEach(b=>b.onclick=()=>{showTab(b.dataset.tab);try{history.replaceState(null,'','#'+b.dataset.tab)}catch(e){}});
+const h=()=>{const id=(location.hash||'').slice(1);if(id&&document.getElementById(id))showTab(id)};window.addEventListener('hashchange',h);h();
+let seed=7;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+const f2=x=>(Math.round(x*100)/100).toFixed(2);
+function tbl(rows,head,cls){let s='<table class="t">';if(head)s+='<tr>'+head.map(x=>'<th>'+x+'</th>').join('')+'</tr>';rows.forEach((r,i)=>{s+='<tr>'+r.map((x,j)=>{const c=cls?cls(i,j):'';return '<td class="'+c+'">'+x+'</td>'}).join('')+'</tr>'});return s+'</table>';}
+
+// ---- 1 stack & split
+let stDim=1;
+function st(){const E=+$('#st_E').value,T=+$('#st_T').value,B=+$('#st_B').value;$('#st_Ev').textContent=E;$('#st_Tv').textContent=T;$('#st_Bv').textContent=B;
+  const val=(e,t)=>'r<sub>'+e+','+t+'</sub>';
+  let s='<div class="h4">the list after T steps: T tensors of shape (E,)</div>';
+  for(let t=0;t<T;t++){s+='<div class="blk">'+tbl([...Array(E)].map((_,e)=>[val(e,t)]),['step '+t])+'</div>';}
+  if(stDim===1){s+='<div class="h4">t.stack(list, dim=1) <span class="shape">('+E+', '+T+')</span> — row = env, column = time ✓</div>';
+    s+=tbl([...Array(E)].map((_,e)=>[...Array(T)].map((_,t)=>val(e,t))),[...Array(T)].map((_,t)=>'t='+t),(i,j)=>'hl');
+    s+='<div class="h4">t.split(…, batch_size='+B+', dim=0) → '+Math.ceil(E/B)+' batch(es), whole rows</div>';
+    for(let b=0;b*B<E;b++){const rows=[];for(let e=b*B;e<Math.min(E,(b+1)*B);e++)rows.push([...Array(T)].map((_,t)=>val(e,t)));s+='<div class="blk">'+tbl(rows,['batch '+b+' <span class="shape">('+rows.length+', '+T+')</span>'].concat([...Array(T-1)].map(()=>'')))+'</div>';}
+  } else {s+='<div class="h4">t.stack(list, dim=0) <span class="shape">('+T+', '+E+')</span> — row = time ✗</div>';
+    s+=tbl([...Array(T)].map((_,t)=>[...Array(E)].map((_,e)=>val(e,t))),[...Array(E)].map((_,e)=>'env '+e),()=> 'bad');
+    s+='<p class="err">compute_returns would now walk across envs instead of through time.</p>';}
+  $('#st_out').innerHTML=s;}
+['#st_E','#st_T','#st_B'].forEach(id=>$(id).oninput=st);
+$('#st_d1').onclick=()=>{stDim=1;$('#st_d1').classList.add('primary');$('#st_d0').classList.remove('primary');st();};
+$('#st_d0').onclick=()=>{stDim=0;$('#st_d0').classList.add('primary');$('#st_d1').classList.remove('primary');st();};
+st();
+
+// ---- 2 gather
+const GE=4;let gLogits=[],gActs=[];
+function gNew(){gLogits=[...Array(GE)].map(()=>[rnd()*3-1.5,rnd()*3-1.5]);gSample();}
+function gSample(){gActs=gLogits.map(l=>{const p=1/(1+Math.exp(l[0]-l[1]));return rnd()<p?1:0;});ga();}
+function ga(){const lp=gLogits.map(l=>{const m=Math.max(l[0],l[1]);const z=Math.log(Math.exp(l[0]-m)+Math.exp(l[1]-m))+m;return [l[0]-z,l[1]-z];});
+  let s='<div class="h4">logits <span class="shape">('+GE+', 2)</span></div>'+tbl(gLogits.map(r=>r.map(f2)),['left','right']);
+  s+='<div class="h4">log_softmax(logits, dim=-1) <span class="shape">('+GE+', 2)</span> — every entry ≤ 0</div>'+tbl(lp.map(r=>r.map(f2)),['log π(left)','log π(right)'],(i,j)=>j===gActs[i]?'pick':'');
+  s+='<div class="h4">actions <span class="shape">('+GE+',)</span> = '+JSON.stringify(gActs)+'   →  unsqueeze(-1) <span class="shape">('+GE+', 1)</span></div>';
+  if($('#ga_bug').checked){s+='<p class="err">RuntimeError: Index tensor must have the same number of dimensions as input tensor</p>';}
+  else{s+='<div class="h4">gather(-1, …) <span class="shape">('+GE+', 1)</span> → squeeze(-1) <span class="shape">('+GE+',)</span></div>'+tbl([lp.map((r,i)=>f2(r[gActs[i]]))],gActs.map((a,i)=>'env '+i),()=> 'pick');}
+  $('#ga_out').innerHTML=s;}
+$('#ga_new').onclick=gNew;$('#ga_resample').onclick=gSample;$('#ga_bug').onchange=ga;gNew();
+
+// ---- 3 baseline
+const BE=4,BT=6;let R=[],bd='0';
+function bNew(){R=[...Array(BE)].map(()=>{let g=[];let v=0;for(let t=BT-1;t>=0;t--){v=1+0.9*v*(rnd()<0.12?0:1);g.unshift(v);}return g;});bl();}
+function bl(){let s='<div class="h4">returns <span class="shape">('+BE+', '+BT+')</span></div>'+tbl(R.map(r=>r.map(f2)),[...Array(BT)].map((_,t)=>'t='+t));
+  let base,shape,adv;
+  if(bd==='0'){base=[...Array(BT)].map((_,t)=>R.reduce((a,r)=>a+r[t],0)/BE);shape='(1, '+BT+')';s+='<div class="h4">returns.mean(dim=0, keepdim=True) <span class="shape">'+shape+'</span> — one baseline per timestep ✓</div>'+tbl([base.map(f2)],null,()=>'hl');adv=R.map(r=>r.map((v,t)=>v-base[t]));}
+  else if(bd==='1'){base=R.map(r=>r.reduce((a,b)=>a+b,0)/BT);shape='('+BE+', 1)';s+='<div class="h4">returns.mean(dim=1, keepdim=True) <span class="shape">'+shape+'</span> — one number per env: compares early steps with late ones ✗</div>'+tbl(base.map(v=>[f2(v)]),null,()=>'bad');adv=R.map((r,e)=>r.map(v=>v-base[e]));}
+  else{const m=R.flat().reduce((a,b)=>a+b,0)/(BE*BT);s+='<div class="h4">returns.mean() <span class="shape">()</span> — one number for everything</div>'+tbl([[f2(m)]],null,()=>'bad');adv=R.map(r=>r.map(v=>v-m));}
+  s+='<div class="h4">advantage = returns − baseline <span class="shape">('+BE+', '+BT+')</span>  teal = pushed up, red = pushed down</div>'+tbl(adv.map(r=>r.map(f2)),null,(i,j)=>adv[i][j]>=0?'hl':'bad');
+  $('#bl_out').innerHTML=s;}
+$$('[data-bd]').forEach(b=>b.onclick=()=>{bd=b.dataset.bd;$$('[data-bd]').forEach(x=>x.classList.toggle('primary',x===b));bl();});
+$('#bl_new').onclick=bNew;bNew();
+
+// ---- 4 returns calculator
+function rc(){const parse=s=>s.split(/[,\s]+/).filter(x=>x.length).map(Number);
+  const r=parse($('#rc_r').value),d=parse($('#rc_d').value),g=Number($('#rc_g').value);
+  if(r.length!==d.length||r.some(isNaN)||d.some(isNaN)||isNaN(g)){$('#rc_out').innerHTML='<p class="err">rewards and dones need the same length, numbers only.</p>';return;}
+  const T=r.length,G=Array(T),B=Array(T);let v=0,w=0;
+  for(let i=T-1;i>=0;i--){v=r[i]+g*v*(d[i]?0:1);G[i]=v;w=r[i]+g*w;B[i]=w;}
+  const fmt=x=>Number.isInteger(x)?String(x):(Math.round(x*1e4)/1e4).toString();
+  let rows=[r.map(fmt),d.map(x=>x?'1':'0'),G.map(fmt)],head=[...Array(T)].map((_,i)=>'i='+i);
+  let s=tbl([['rewards'].concat(rows[0]),['dones'].concat(rows[1]),['<b>returns</b>'].concat(rows[2])].concat($('#rc_bug').checked?[['no mask (bug)'].concat(B.map(fmt))]:[]),[''].concat(head),(i,j)=>j===0?'':(i===1&&d[j-1]?'done':(i===2?'hl':(i===3&&Math.abs(B[j-1]-G[j-1])>1e-9?'bad':''))));
+  s+='<div class="h4">as a Python list: <code>['+G.map(fmt).join(', ')+']</code></div>';
+  $('#rc_out').innerHTML=s;}
+['#rc_r','#rc_d','#rc_g'].forEach(id=>$(id).oninput=rc);$('#rc_bug').onchange=rc;rc();
+
+// ---- 5 tracer
+function tr(){const E=$('#tr_E').value||'E',T=$('#tr_T').value||'T',O=$('#tr_O').value||'4',A=$('#tr_A').value||'2';
+  const rows=[['tau.obs','('+E+', '+T+', '+O+')','stored observations'],['tau.actions','('+E+', '+T+')','int, the action taken'],['tau.rewards · tau.dones','('+E+', '+T+')','float · bool'],
+  ['returns = compute_returns(…)','('+E+', '+T+')','reward-to-go'],['returns = normalize_returns(returns)','('+E+', '+T+')','same shape, rescaled'],
+  ['logits = policy_network(tau.obs)','('+E+', '+T+', '+A+')','Linear acts on the last dim'],['log_softmax(logits, -1)','('+E+', '+T+', '+A+')',''],
+  ['logprobs_taken (gather + squeeze)','('+E+', '+T+')','WITH gradients'],['iw','('+E+', '+T+')','ones if use_iw=False'],
+  ['baseline = returns.mean(0, keepdim=True)','(1, '+T+')','per timestep'],['adv = returns − baseline','('+E+', '+T+')','broadcast'],
+  ['joy = (iw * logprobs * adv.detach()).mean()','()','0-dim scalar']];
+  $('#tr_out').innerHTML=tbl(rows.map(r=>['<code>'+r[0]+'</code>','<span class="shape">'+r[1]+'</span>',r[2]]),['line','shape','note']);}
+['#tr_E','#tr_T','#tr_O','#tr_A'].forEach(id=>$(id).oninput=tr);tr();
+})();
+</script>
+
+<!--presenter-->
+<style>
+.placard.pc>h3{cursor:pointer}
+.placard.pc>h3::after{content:" ▸";font-weight:400;opacity:.45}
+.placard.pc.open>h3::after{content:" ▾"}
+.placard.pc:not(.open)>*:not(h3){display:none}
+.placard.pc:not(.open){padding-bottom:10px}
+.placard.pc:not(.open)>h3{margin:0}
+#pnote{position:fixed;right:14px;bottom:12px;font:12px system-ui,sans-serif;color:#8a90a0;background:#fff;border:1px solid #e3e5ea;border-radius:8px;padding:4px 9px;cursor:pointer;z-index:99}
+</style>
+<script>
+(function(){
+  function setup(){
+    document.querySelectorAll('.placard').forEach(function(p){
+      if(p.classList.contains('pc')||p.id||p.querySelector('[id]')) return;
+      if(p.querySelector('table,canvas,svg,input,select,button,textarea,pre')) return;
+      var h=p.querySelector(':scope>h3'); if(!h) return;
+      var kids=[].slice.call(p.children).filter(function(c){return c!==h});
+      if(!kids.length) return;
+      p.classList.add('pc');
+      h.addEventListener('click',function(){p.classList.toggle('open')});
+    });
+  }
+  var all=false;
+  function toggleAll(){all=!all;document.querySelectorAll('.placard.pc').forEach(function(p){p.classList.toggle('open',all)});}
+  document.addEventListener('keydown',function(e){if((e.key==='n'||e.key==='N')&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){toggleAll();}});
+  window.addEventListener('load',function(){
+    setup();
+    var b=document.createElement('div');b.id='pnote';b.textContent='notes: click a heading · N = all';b.onclick=toggleAll;document.body.appendChild(b);
+    new MutationObserver(setup).observe(document.body,{childList:true,subtree:true});
+  });
+})();
+</script>
+</body></html>

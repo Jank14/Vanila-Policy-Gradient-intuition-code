@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Greedy or sample</title>
+<style>:root{--teal:#0E7C7B;--teal-lt:#DCEEED;--coral:#E4572E;--coral-lt:#FBE4DC;--purple:#6C4AB6;--purple-lt:#EAE3F7;--amber:#B7791F;--amber-lt:#FDF1D6;--blue:#2F6DB5;--blue-lt:#DDE8F6;--ink:#1A1A1A;--muted:#4F5A63;--line:#C9D0D5;--bg:#F2F4F5;--code:#1E1E2E;--grey:#8A949C;--page:#FFFFFF}
+*{box-sizing:border-box}
+html{font-size:20px}
+@media (min-width:1700px){html{font-size:23px}}
+@media (max-width:900px){html{font-size:16px}}
+body{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif;margin:0;background:var(--page);color:var(--ink);line-height:1.35}
+.wrap{max-width:1800px;margin:0 auto;padding:20px 30px 40px}
+.kicker{font-size:.78rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
+h1{font-size:1.9rem;margin:.1em 0 .15em}
+.sub{color:var(--muted);font-size:1.02rem;margin:0 0 .6rem;max-width:80ch}
+.tabs{display:flex;flex-wrap:wrap;gap:10px;margin:.5rem 0 1rem;align-items:center}
+.tabs button{font:inherit;font-size:.95rem;font-weight:700;padding:.45rem .9rem;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.tabs button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+section.tab{display:none}
+section.tab.on{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:24px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.stage{border:2px solid var(--line);border-radius:18px;padding:12px;background:#fff;position:relative}
+.stage canvas,.stage svg{width:100%;height:auto;display:block}
+.side{display:flex;flex-direction:column;gap:14px}
+.placard{border-radius:16px;padding:14px 18px;background:var(--bg);font-size:1.02rem}
+.placard h3{margin:0 0 .3rem;font-size:1.15rem}
+.placard p{margin:.25rem 0}
+.placard.teal{background:var(--teal-lt)}.placard.teal h3{color:var(--teal)}
+.placard.coral{background:var(--coral-lt)}.placard.coral h3{color:var(--coral)}
+.placard.purple{background:var(--purple-lt)}.placard.purple h3{color:var(--purple)}
+.placard.amber{background:var(--amber-lt)}.placard.amber h3{color:var(--amber)}
+.placard.dark{background:var(--code);color:#E4E4EF}.placard.dark h3{color:#fff}
+.ctl{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;font-size:.98rem;margin:10px 0}
+.ctl label{font-weight:700;color:var(--muted)}
+.ctl input[type=range]{width:180px;accent-color:var(--teal)}
+.ctl select{font:inherit;padding:.25rem .4rem;border-radius:8px;border:2px solid var(--line)}
+button.b{font:inherit;font-size:.98rem;font-weight:700;padding:.45rem .95rem;border-radius:12px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+button.b.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+button.b.coral{background:var(--coral);border-color:var(--coral);color:#fff}
+button.b:disabled{opacity:.4;cursor:default}
+.mono,code{font-family:"Courier New","DejaVu Sans Mono",monospace}
+code{background:var(--bg);padding:0 .25em;border-radius:5px}
+.placard.dark code{background:#2C2C40}
+.stat{display:flex;gap:10px;flex-wrap:wrap}
+.stat div{flex:1;min-width:110px;border-radius:14px;padding:8px 12px;background:var(--bg)}
+.stat b{display:block;font-size:1.55rem;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.85rem}
+.note{color:var(--grey);font-size:.85rem;font-style:italic}
+table.t{border-collapse:separate;border-spacing:3px;font-size:.92rem;font-variant-numeric:tabular-nums}
+table.t td,table.t th{padding:4px 8px;border-radius:7px;text-align:center}
+table.t th{color:var(--muted);font-weight:700}
+.chk{display:inline-flex;gap:6px;align-items:center;font-weight:700;color:var(--muted);cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--teal)}
+.keys{position:fixed;right:14px;bottom:10px;font-size:.75rem;color:var(--grey);background:#fff;padding:4px 10px;border-radius:10px;border:1px solid var(--line)}
+svg text{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.9rem;color:var(--muted);margin:6px 2px}
+.legend i{display:inline-block;width:16px;height:16px;border-radius:4px;vertical-align:-3px;margin-right:5px}
+canvas.hm{cursor:crosshair}
+
+.tabs.grouped{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:flex-start}
+.tabs.grouped .grp{display:flex;flex-direction:column;gap:5px}
+.tabs.grouped .grp>span{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tabs.grouped .grp>div{display:flex;gap:6px;flex-wrap:wrap}
+.tabs.grouped button{font-size:.9rem;padding:.4rem .75rem}
+.tabs.grouped button .n{display:inline-block;min-width:1.3em;margin-right:.35em;color:var(--teal);font-variant-numeric:tabular-nums}
+.tabs.grouped button.on .n{color:#fff}
+</style></head><body>
+<div class="wrap">
+<div class="kicker">TARA · RL week 1 · interactive 15 · greedy or sample?</div>
+<h1>Why a policy should roll its dice</h1>
+<p class="sub">One state, two actions. Hidden from the agent: <b>LEFT pays 10, RIGHT pays 3</b>. It starts slightly preferring RIGHT. Both agents learn the same way: after each try, the action they took gets pushed up by its reward. The only difference is how they choose.</p>
+<div class="tabs">
+  <button data-tab="one" class="on"><span class="n">1</span>one run, side by side</button>
+  <button data-tab="odds"><span class="n">2</span>the odds over 1,000 runs</button>
+</div>
+
+<section class="tab on" id="one">
+<div class="ctl">
+  <button class="b primary" id="t1">▶ 1 try each</button>
+  <button class="b" id="t10">▶ 10 tries each</button>
+  <button class="b" id="rs">reset</button>
+  <label>start: π(left)</label><input type="range" id="p0" min="0.05" max="0.5" step="0.05" value="0.45"><span id="p0v" class="mono"></span>
+</div>
+<div class="grid">
+  <div class="stage"><svg id="lanes" viewBox="0 0 900 430"></svg></div>
+  <div class="side">
+    <div class="placard coral"><h3>Greedy: always the argmax</h3><p>It only ever learns about the action it picks. RIGHT keeps paying 3, so RIGHT keeps getting pushed up. It <b>never</b> finds out that LEFT pays 10.</p></div>
+    <div class="placard teal"><h3>Sample: roll the dice</h3><p>LEFT still comes up about 45% of the time. Each LEFT pays 10: a bigger push than RIGHT's 3. Within a few tries LEFT wins. <b>Exploration came for free.</b></p></div>
+    <div class="placard"><h3>In the notebook</h3><p><code>get_actions</code> samples with <code>t.multinomial</code>: the teal agent. As training sharpens the probabilities, it becomes nearly greedy by itself.</p></div>
+  </div>
+</div>
+</section>
+
+<section class="tab" id="odds">
+<div class="ctl">
+  <label>tries per run</label><select id="nt"><option>5</option><option selected>10</option><option>20</option><option>50</option></select>
+  <button class="b primary" id="run">▶ run 1,000 seeds of each</button>
+</div>
+<div class="grid">
+  <div class="stage"><svg id="bars" viewBox="0 0 900 400"></svg></div>
+  <div class="side">
+    <div class="placard purple" id="oddsRead"><h3>Press run</h3><p>Each seed is a fresh agent starting at the same π(left).</p></div>
+    <div class="placard"><h3>The odds, by hand</h3><p>Greedy tries LEFT with probability <b>0</b>: it is stuck after try 1. A sampler that never updated would miss LEFT 10 times in a row with probability 0.55<sup>10</sup> ≈ <b>0.25%</b>. Learning only makes LEFT more likely once it has paid 10.</p></div>
+    <div class="placard amber"><h3>The trade-off</h3><p>Sampling sometimes picks the worse action: that is the price of exploring. Greedy never pays it, and never improves either.</p></div>
+  </div>
+</div>
+</section>
+</div>
+<style>.mono{font-family:Consolas,monospace}.tabs button .n{margin-right:.45em;color:var(--teal)}.tabs button.on .n{color:#fff}</style>
+<script>
+(function(){
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];const NS='http://www.w3.org/2000/svg';
+function el(svg,t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);svg.appendChild(e);return e;}
+function tx(svg,x,y,s,a){const e=el(svg,'text',Object.assign({x,y,'font-size':16,fill:'#4F5A63','font-family':'Calibri,Carlito,Arial'},a||{}));e.textContent=s;return e;}
+function showTab(id){$$('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));$$('section.tab').forEach(s=>s.classList.toggle('on',s.id===id));}
+$$('.tabs button').forEach(b=>b.onclick=()=>{showTab(b.dataset.tab);try{history.replaceState(null,'','#'+b.dataset.tab)}catch(e){}});
+if(location.hash&&document.getElementById(location.hash.slice(1)))showTab(location.hash.slice(1));
+const C={teal:'#0E7C7B',tealLt:'#DCEEED',coral:'#E4572E',coralLt:'#FBE4DC',grey:'#8A949C',line:'#C9D0D5',ink:'#1A1A1A',purple:'#6C4AB6'};
+const R=[10,3],LR=0.05;
+function agent(p0){const z=Math.log(p0/(1-p0));return {z:[z,0],tries:[]};}
+const probs=a=>{const e0=Math.exp(a.z[0]),e1=Math.exp(a.z[1]);return [e0/(e0+e1),e1/(e0+e1)];};
+function act(a,greedy){const p=probs(a);const k=greedy?(p[0]>p[1]?0:1):(Math.random()<p[0]?0:1);const r=R[k];
+ // softmax policy-gradient push: logit += lr * r * (onehot - p)
+ for(let i=0;i<2;i++)a.z[i]+=LR*r*((i===k?1:0)-p[i]);a.tries.push([k,r]);}
+let G,S;
+function reset(){const p0=+$('#p0').value;G=agent(p0);S=agent(p0);draw();}
+function lane(svg,y,a,lab,col,bg){el(svg,'rect',{x:4,y,width:892,height:190,rx:14,fill:bg});tx(svg,20,y+30,lab,{'font-weight':700,fill:col,'font-size':19});
+ const p=probs(a);const tot=a.tries.reduce((s,t)=>s+t[1],0);
+ a.tries.slice(-30).forEach(([k,r],i)=>{const x=20+i*28;el(svg,'rect',{x,y:y+48,width:24,height:30,rx:4,fill:k===0?C.teal:C.grey});tx(svg,x+12,y+68,k===0?'L':'R',{'text-anchor':'middle',fill:'#fff','font-weight':700,'font-size':14});tx(svg,x+12,y+96,String(r),{'text-anchor':'middle','font-size':13});});
+ tx(svg,20,y+130,'π(left) now',{'font-size':15});el(svg,'rect',{x:120,y:y+116,width:600,height:20,rx:5,fill:'#fff'});el(svg,'rect',{x:120,y:y+116,width:600*p[0],height:20,rx:5,fill:C.teal});
+ tx(svg,730,y+132,p[0].toFixed(2),{'font-weight':700,fill:C.ink});
+ tx(svg,20,y+170,'tries: '+a.tries.length+'   ·   total reward: '+tot+'   ·   average per try: '+(a.tries.length?(tot/a.tries.length).toFixed(1):'–'),{'font-size':15,fill:C.ink});}
+function draw(){const svg=$('#lanes');svg.innerHTML='';lane(svg,6,G,'Greedy (always the most likely action)',C.coral,C.coralLt);lane(svg,226,S,'Sample (roll the dice with π)',C.teal,C.tealLt);$('#p0v').textContent=$('#p0').value;}
+$('#t1').onclick=()=>{act(G,true);act(S,false);draw();};
+$('#t10').onclick=()=>{for(let i=0;i<10;i++){act(G,true);act(S,false);}draw();};
+$('#rs').onclick=reset;$('#p0').oninput=reset;reset();
+$('#run').onclick=()=>{const n=+$('#nt').value,p0=+$('#p0').value;const res={g:[0,0,0],s:[0,0,0]};
+ for(let k=0;k<1000;k++){for(const [key,gr] of [['g',true],['s',false]]){const a=agent(p0);for(let i=0;i<n;i++)act(a,gr);
+  const triedL=a.tries.some(t=>t[0]===0);const prefL=probs(a)[0]>0.5;const avg=a.tries.slice(-Math.min(5,n)).reduce((s,t)=>s+t[1],0)/Math.min(5,n);
+  res[key][0]+=triedL?1:0;res[key][1]+=prefL?1:0;res[key][2]+=avg;}}
+ const svg=$('#bars');svg.innerHTML='';const groups=[['tried LEFT at least once',0,100,'%'],['ends preferring LEFT',1,100,'%'],['reward per try (last 5)',2,10,'']];
+ groups.forEach(([lab,i,mx,u],gi)=>{const x=40+gi*290;tx(svg,x+120,385,lab,{'text-anchor':'middle','font-size':15,'font-weight':700,fill:C.ink});
+  [['g',C.coral,'greedy'],['s',C.teal,'sample']].forEach(([key,col,nm],j)=>{const v=i<2?res[key][i]/10:res[key][i]/1000;const h=300*v/mx;const bx=x+30+j*110;
+   el(svg,'rect',{x:bx,y:350-h,width:90,height:Math.max(1,h),rx:6,fill:col});tx(svg,bx+45,340-h,(i<2?v.toFixed(1)+'%':v.toFixed(1)),{'text-anchor':'middle','font-weight':700,fill:C.ink});tx(svg,bx+45,368,nm,{'text-anchor':'middle','font-size':13});});});
+ $('#oddsRead').innerHTML='<h3>After '+n+' tries, 1,000 runs each</h3><p>Greedy found LEFT in <b>'+(res.g[0]/10).toFixed(1)+'%</b> of runs; sampling in <b>'+(res.s[0]/10).toFixed(1)+'%</b>. Sampling ends preferring LEFT in <b>'+(res.s[1]/10).toFixed(1)+'%</b> of runs and earns <b>'+(res.s[2]/1000).toFixed(1)+'</b> per try at the end, vs <b>'+(res.g[2]/1000).toFixed(1)+'</b> for greedy.</p>';};
+})();
+</script>
+
+<!--presenter-->
+<style>
+.placard.pc>h3{cursor:pointer}
+.placard.pc>h3::after{content:" ▸";font-weight:400;opacity:.45}
+.placard.pc.open>h3::after{content:" ▾"}
+.placard.pc:not(.open)>*:not(h3){display:none}
+.placard.pc:not(.open){padding-bottom:10px}
+.placard.pc:not(.open)>h3{margin:0}
+#pnote{position:fixed;right:14px;bottom:12px;font:12px system-ui,sans-serif;color:#8a90a0;background:#fff;border:1px solid #e3e5ea;border-radius:8px;padding:4px 9px;cursor:pointer;z-index:99}
+</style>
+<script>
+(function(){
+  function setup(){
+    document.querySelectorAll('.placard').forEach(function(p){
+      if(p.classList.contains('pc')||p.id||p.querySelector('[id]')) return;
+      if(p.querySelector('table,canvas,svg,input,select,button,textarea,pre')) return;
+      var h=p.querySelector(':scope>h3'); if(!h) return;
+      var kids=[].slice.call(p.children).filter(function(c){return c!==h});
+      if(!kids.length) return;
+      p.classList.add('pc');
+      h.addEventListener('click',function(){p.classList.toggle('open')});
+    });
+  }
+  var all=false;
+  function toggleAll(){all=!all;document.querySelectorAll('.placard.pc').forEach(function(p){p.classList.toggle('open',all)});}
+  document.addEventListener('keydown',function(e){if((e.key==='n'||e.key==='N')&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){toggleAll();}});
+  window.addEventListener('load',function(){
+    setup();
+    var b=document.createElement('div');b.id='pnote';b.textContent='notes: click a heading · N = all';b.onclick=toggleAll;document.body.appendChild(b);
+    new MutationObserver(setup).observe(document.body,{childList:true,subtree:true});
+  });
+})();
+</script>
+</body></html>

@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compute Returns — TARA RL</title>
+<style>:root{--teal:#0E7C7B;--teal-lt:#DCEEED;--coral:#E4572E;--coral-lt:#FBE4DC;--purple:#6C4AB6;--purple-lt:#EAE3F7;--amber:#B7791F;--amber-lt:#FDF1D6;--blue:#2F6DB5;--blue-lt:#DDE8F6;--ink:#1A1A1A;--muted:#4F5A63;--line:#C9D0D5;--bg:#F2F4F5;--code:#1E1E2E;--grey:#8A949C;--page:#FFFFFF}
+*{box-sizing:border-box}
+html{font-size:20px}
+@media (min-width:1700px){html{font-size:23px}}
+@media (max-width:900px){html{font-size:16px}}
+body{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif;margin:0;background:var(--page);color:var(--ink);line-height:1.35}
+.wrap{max-width:1800px;margin:0 auto;padding:20px 30px 40px}
+.kicker{font-size:.78rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
+h1{font-size:1.9rem;margin:.1em 0 .15em}
+.sub{color:var(--muted);font-size:1.02rem;margin:0 0 .6rem;max-width:80ch}
+.tabs{display:flex;flex-wrap:wrap;gap:10px;margin:.5rem 0 1rem;align-items:center}
+.tabs button{font:inherit;font-size:.95rem;font-weight:700;padding:.45rem .9rem;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.tabs button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+section.tab{display:none}
+section.tab.on{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:24px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.stage{border:2px solid var(--line);border-radius:18px;padding:12px;background:#fff;position:relative}
+.stage canvas,.stage svg{width:100%;height:auto;display:block}
+.side{display:flex;flex-direction:column;gap:14px}
+.placard{border-radius:16px;padding:14px 18px;background:var(--bg);font-size:1.02rem}
+.placard h3{margin:0 0 .3rem;font-size:1.15rem}
+.placard p{margin:.25rem 0}
+.placard.teal{background:var(--teal-lt)}.placard.teal h3{color:var(--teal)}
+.placard.coral{background:var(--coral-lt)}.placard.coral h3{color:var(--coral)}
+.placard.purple{background:var(--purple-lt)}.placard.purple h3{color:var(--purple)}
+.placard.amber{background:var(--amber-lt)}.placard.amber h3{color:var(--amber)}
+.placard.dark{background:var(--code);color:#E4E4EF}.placard.dark h3{color:#fff}
+.ctl{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;font-size:.98rem;margin:10px 0}
+.ctl label{font-weight:700;color:var(--muted)}
+.ctl input[type=range]{width:180px;accent-color:var(--teal)}
+.ctl select{font:inherit;padding:.25rem .4rem;border-radius:8px;border:2px solid var(--line)}
+button.b{font:inherit;font-size:.98rem;font-weight:700;padding:.45rem .95rem;border-radius:12px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+button.b.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+button.b.coral{background:var(--coral);border-color:var(--coral);color:#fff}
+button.b:disabled{opacity:.4;cursor:default}
+.mono,code{font-family:"Courier New","DejaVu Sans Mono",monospace}
+code{background:var(--bg);padding:0 .25em;border-radius:5px}
+.placard.dark code{background:#2C2C40}
+.stat{display:flex;gap:10px;flex-wrap:wrap}
+.stat div{flex:1;min-width:110px;border-radius:14px;padding:8px 12px;background:var(--bg)}
+.stat b{display:block;font-size:1.55rem;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.85rem}
+.note{color:var(--grey);font-size:.85rem;font-style:italic}
+table.t{border-collapse:separate;border-spacing:3px;font-size:.92rem;font-variant-numeric:tabular-nums}
+table.t td,table.t th{padding:4px 8px;border-radius:7px;text-align:center}
+table.t th{color:var(--muted);font-weight:700}
+.chk{display:inline-flex;gap:6px;align-items:center;font-weight:700;color:var(--muted);cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--teal)}
+.keys{position:fixed;right:14px;bottom:10px;font-size:.75rem;color:var(--grey);background:#fff;padding:4px 10px;border-radius:10px;border:1px solid var(--line)}
+svg text{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem}
+
+table.tens{border-collapse:separate;border-spacing:3px;font-family:"Courier New",monospace;font-size:.88rem;font-variant-numeric:tabular-nums}
+table.tens td{background:var(--bg);padding:3px 7px;border-radius:5px;text-align:right}
+table.tens td.hl{background:var(--teal);color:#fff;font-weight:700}
+table.tens td.act{background:var(--amber-lt);color:var(--amber);font-weight:700;text-align:center}
+table.tens td.done{background:var(--coral);color:#fff;font-weight:700;text-align:center}
+.tblock{display:flex;flex-direction:column;gap:4px;min-width:0}
+.tblock .lbl{font-weight:700;font-size:.9rem}
+.tblock .shp{font-family:"Courier New",monospace;font-size:.8rem;color:var(--muted)}
+.pipe{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;overflow-x:auto}
+.pipe .arr{align-self:center;font-size:1.4rem;color:var(--muted)}
+.codebox{background:#1E1E2E;color:#E4E4EF;border-radius:14px;padding:12px 16px;font-family:"Courier New",monospace;font-size:.82rem;line-height:1.6;overflow-x:auto}
+.codebox div{padding:0 6px;border-radius:5px}
+.codebox div.on{background:#0E7C7B;color:#fff}
+.edit{display:grid;grid-template-columns:110px repeat(8,minmax(0,1fr));gap:5px;align-items:center}
+.edit input[type=number]{width:100%;font:inherit;font-family:"Courier New",monospace;padding:.3rem;border:2px solid var(--line);border-radius:8px;text-align:center}
+.edit .cell{background:var(--bg);border-radius:8px;padding:.35rem;text-align:center;font-family:"Courier New",monospace;min-height:2.1rem}
+.edit .cell.cur{outline:3px solid var(--ink)}
+.edit .cell.g{background:var(--teal-lt);color:var(--teal);font-weight:700}
+.edit .cell.bad{background:var(--coral-lt);color:var(--coral);font-weight:700}
+.edit button.dn{font:inherit;font-weight:700;border-radius:8px;border:2px solid var(--line);background:#fff;padding:.3rem;cursor:pointer}
+.edit button.dn.on{background:var(--coral);border-color:var(--coral);color:#fff}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.9rem;color:var(--muted);margin:6px 2px}
+.legend i{display:inline-block;width:16px;height:16px;border-radius:4px;vertical-align:-3px;margin-right:5px}
+canvas.hm{cursor:crosshair}
+
+.tabs.grouped{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:flex-start}
+.tabs.grouped .grp{display:flex;flex-direction:column;gap:5px}
+.tabs.grouped .grp>span{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tabs.grouped .grp>div{display:flex;gap:6px;flex-wrap:wrap}
+.tabs.grouped button{font-size:.9rem;padding:.4rem .75rem}
+.tabs.grouped button .n{display:inline-block;min-width:1.3em;margin-right:.35em;color:var(--teal);font-variant-numeric:tabular-nums}
+.tabs.grouped button.on .n{color:#fff}
+</style></head><body><div class="wrap">
+<div class="kicker">TARA · RL week 1 · interactive 09</div>
+<h1>compute_returns</h1>
+<p class="sub">Walk backwards, reset at every done.</p>
+<div class="tabs grouped"><div class="grp"><span>Notebook</span><div><button data-tab="byhand" class="on"><span class="n">1</span>Returns by hand</button><button data-tab="ret" class=""><span class="n">2</span>On a real rollout</button></div></div></div>
+<section class="tab on" id="byhand">
+ <div class="ctl"><label>examples</label><button class="b" id="h_ex1">docstring example</button><button class="b" id="h_ex2">Slido quiz</button><button class="b" id="h_ex3">CartPole-style</button><label>γ</label><input type="number" id="h_gam" step="0.05" min="0" max="1" value="0.9" style="width:5rem;font:inherit;padding:.25rem;border-radius:8px;border:2px solid var(--line)"></div>
+ <div class="stage"><div class="edit" id="h_edit"></div></div>
+ <div class="ctl"><button class="b primary" id="h_back">◀ one step backwards</button><button class="b" id="h_all">run the whole loop</button><button class="b" id="h_reset">start over</button><label class="chk"><input type="checkbox" id="h_bug"> also show the bug: no done mask</label></div>
+ <div class="grid">
+  <div class="codebox" id="h_code"></div>
+  <div class="side">
+   <div class="placard teal"><h3>Edit anything</h3><p>Type rewards, click done cells to toggle them, change γ. Then step the loop backwards and watch G carry from right to left.</p></div>
+   <div class="placard coral"><h3>The done mask</h3><p>Where done = 1, the G coming from the right is multiplied by 0: the next game's rewards can't leak into this one. Tick "show the bug" to see what happens without it.</p></div>
+  </div></div>
+</section>
+<section class="tab" id="ret"><div class="grid">
+ <div><div class="stage"><canvas class="hm" id="h2" width="900" height="420"></canvas><svg id="rowchart"></svg></div>
+  <div class="ctl"><label>γ</label><input type="range" id="gam" min="0.8" max="1" step="0.005" value="0.99"><span id="gamv" class="mono"></span><button class="b primary" id="sweep">▶ sweep backwards</button><label class="chk"><input type="checkbox" id="nomask"> forget the done mask (bug)</label></div></div>
+ <div class="side">
+  <div class="placard"><h3>Colour = G<sub>t</sub></h3><p>Darker = more discounted reward still to come. The chart below follows the row you click: rewards are +1 every step, dones are the coral lines.</p></div>
+  <div class="placard teal"><h3>Watch the sweep</h3><p>The loop fills one <b>column</b> at a time, right to left, for all 16 envs at once: <code>G = r[:, i] + γ·G·(~done[:, i])</code>.</p></div>
+  <div class="placard coral"><h3>The fade at the right edge</h3><p>Envs still alive at step 149 start from G = 0, so their last steps look worthless — even though the pole is fine. That's the window cut-off. A critic (4 pm) would fill in V(s) there.</p></div>
+  <div class="placard purple"><h3>Tick "forget the mask"</h3><p>G now flows across dones: the last steps of a dying game borrow the next game's reward and look good. Exactly the bug the quiz warned about.</p></div>
+ </div></div></section>
+<section class="tab" id="net" aria-hidden="true">
+ <div class="ctl"><button class="b primary" id="n_sample">sample actions again</button><button class="b" id="n_states">new observations</button><button class="b" id="n_init">re-initialise the network</button><span class="note">4 envs · PolicyNetwork(4 → 120 → 84 → 2), freshly initialised like PyTorch</span></div>
+ <div class="stage"><div class="pipe" id="n_pipe"></div></div>
+ <div class="grid" style="margin-top:14px">
+  <div class="stage"><svg id="n_mlp"></svg></div>
+  <div class="side">
+   <div class="placard teal"><h3>Follow one row</h3><p>Each row is one env. <code>obs</code> goes through the network to 2 <b>logits</b> (any real numbers), <code>log_softmax</code> turns them into log-probabilities, <code>multinomial</code> samples an action, and <code>gather</code> picks the log-prob of <b>that</b> action (highlighted).</p></div>
+   <div class="placard amber"><h3>An untrained network is ~50/50</h3><p>Fresh weights give logits near 0, so both actions are about equally likely. That's the policy VPG starts from — pure exploration.</p></div>
+   <div class="placard purple"><h3>Click a row</h3><p>The diagram on the left shows that env's hidden activations: 120 then 84 ReLU units (grey = 0, switched off), then the 2 logits — no ReLU at the end.</p></div>
+  </div></div>
+</section>
+<section class="tab" id="fill" aria-hidden="true"><div class="grid">
+ <div>
+  <div class="stage"><canvas id="f_carts" width="900" height="250"></canvas></div>
+  <div class="stage" style="margin-top:10px"><canvas id="f_grid" width="900" height="260"></canvas></div>
+  <div class="ctl"><button class="b primary" id="f_step">one timestep ▶</button><button class="b" id="f_line">one line ▶</button><button class="b" id="f_play">▶ play</button><button class="b" id="f_reset">gen_rollout again (full reset)</button></div>
+ </div>
+ <div class="side">
+  <div class="codebox" id="f_code"></div>
+  <div class="pipe" id="f_tens"></div>
+  <div class="placard teal"><h3>All 8 envs move together</h3><p>One call to <code>envs.step(actions)</code> advances every env. Everything comes back with <code>num_envs</code> as the first dimension — one row per env.</p></div>
+  <div class="placard coral"><h3>Coral = done</h3><p>That env's game ended on this step. It <b>resets itself</b> and keeps going in the same row, so one row holds several games.</p></div>
+  <div class="placard amber"><h3>Stored obs = before acting</h3><p><code>add_step(obs, …)</code> stores the observation the action was chosen from, then <code>obs = new_obs</code> moves on.</p></div>
+ </div></div></section>
+<section class="tab" id="grid" aria-hidden="true"><div class="grid">
+ <div><div class="stage"><canvas class="hm" id="h1" width="900" height="420"></canvas>
+  <div class="ctl" style="margin:4px 2px"><button class="b" id="newroll">new rollout</button><span class="note">16 envs × 150 steps from a half-trained policy (the notebook: 32 × 500)</span></div><div class="legend"><span><i style="background:#D9CFEF"></i>pushed left (0)</span><span><i style="background:#BFE0DF"></i>pushed right (1)</span><span><i style="background:#E4572E"></i>done = True</span><span><i style="background:#fff;border:1px solid #C9D0D5"></i>after the window</span></div></div>
+  <div class="stage" style="margin-top:10px"><canvas id="cp1" width="900" height="200"></canvas></div></div>
+ <div class="side">
+  <div class="placard dark" id="cell"><h3>click any cell</h3><p>rows = envs (dim 0) · columns = steps (dim 1)</p></div>
+  <div class="placard teal"><h3>Rows hold several games</h3><p>Each coral mark is a <code>done</code>: that env's game ended there and it reset itself. Short games early in a row, then a fresh start in the same row.</p></div>
+  <div class="placard amber"><h3>The logprob column</h3><p>Clicking shows log π(a|s) — the value <code>get_actions</code> stored. It was recorded under <code>no_grad</code>; <code>compute_logprobs</code> recomputes it with gradients later.</p></div>
+ </div></div></section>
+<section class="tab" id="adv" aria-hidden="true"><div class="grid">
+ <div><div class="stage"><canvas class="hm" id="h3" width="900" height="420"></canvas><svg id="basechart"></svg></div>
+  <div class="ctl"><label class="chk"><input type="checkbox" id="usebase" checked> subtract baseline (mean over envs, dim=0)</label><label class="chk"><input type="checkbox" id="usenorm" checked> normalize_returns first</label></div></div>
+ <div class="side">
+  <div class="stat"><div><b id="fracpos">—</b><span>cells pushed UP</span></div><div><b id="fracneg">—</b><span>cells pushed DOWN</span></div></div>
+  <div class="placard"><h3>Colour = advantage</h3><p><b style="color:var(--teal)">teal</b> = better than the other envs at this step → that action gets more likely. <b style="color:var(--coral)">coral</b> = worse → less likely.</p></div>
+  <div class="placard teal"><h3>Untick both boxes</h3><p>With neither baseline nor normalisation every cell is teal: all returns are positive, so every action gets pushed up. With the baseline, roughly half flip to coral.</p></div>
+  <div class="placard amber"><h3>The chart: b(t) per column</h3><p>The baseline is one number per timestep (shape (1, T)). It drops towards the right mainly because of the cut-off: near step 149 every G<sub>t</sub> is small.</p></div>
+ </div></div></section>
+<section class="tab" id="push" aria-hidden="true"><div class="grid">
+ <div><div class="stage"><canvas class="hm" id="h4" width="900" height="420"></canvas><svg id="pushchart"></svg></div></div>
+ <div class="side">
+  <div class="placard"><h3>Top: which way each cell pushes</h3><p>Each cell's gradient changes P(push right | that state) in proportion to <b>adv · (one-hot(a) − π)<sub>right</sub></b>. <b style="color:var(--teal)">teal</b> = "push right more often here", <b style="color:var(--purple)">purple</b> = "push left more often here".</p></div>
+  <div class="placard teal"><h3>Bottom: the rule it's learning</h3><p>Group every cell by its pole angle and add up the pushes. Leaning right (θ &gt; 0) → net push toward <b>right</b>. Leaning left → toward <b>left</b>. Nobody told it — this came from +1 rewards and the baseline alone.</p></div>
+  <div class="placard purple"><h3>That's one gradient step</h3><p><code>(iw · logprobs · adv).mean()</code> → backward → Adam (maximize). Then this rollout is thrown away and a new one is played.</p></div>
+ </div></div></section>
+</div>
+<script>// ---------- shared helpers for the TARA RL labs ----------
+const C = {teal:'#0E7C7B',tealLt:'#DCEEED',coral:'#E4572E',coralLt:'#FBE4DC',purple:'#6C4AB6',purpleLt:'#EAE3F7',
+  amber:'#B7791F',amberLt:'#FDF1D6',blue:'#2F6DB5',blueLt:'#DDE8F6',ink:'#1A1A1A',muted:'#4F5A63',line:'#C9D0D5',bg:'#F2F4F5',grey:'#8A949C',navy:'#20202F'};
+const NS='http://www.w3.org/2000/svg';
+function S(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs||{})e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function T(parent,x,y,txt,o){o=o||{};const e=S('text',{x,y,'font-size':o.size||16,fill:o.color||C.ink,'font-weight':o.bold?700:400,'text-anchor':o.anchor||'start','dominant-baseline':o.base||'middle'},parent);if(o.mono)e.setAttribute('font-family','Courier New, monospace');if(o.italic)e.setAttribute('font-style','italic');e.textContent=txt;return e;}
+function $(q){return document.querySelector(q)}
+function $$(q){return [...document.querySelectorAll(q)]}
+function fmt(v,d=2){if(!isFinite(v))return '—';const s=v.toFixed(d);return (/^-0\.?0*$/.test(s))?s.slice(1):s.replace('-','−')}
+function sig(z){return 1/(1+Math.exp(-z))}
+function rng(seed){let s=(seed>>>0)||1;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+function gauss(r){let u=0,v=0;while(u===0)u=r();v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function softmax(z){const m=Math.max(...z);const e=z.map(v=>Math.exp(v-m));const s=e.reduce((a,b)=>a+b,0);return e.map(v=>v/s)}
+function mix(a,b,t){const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16);const r=[16,8,0].map(s=>Math.round(((pa>>s)&255)*(1-t)+((pb>>s)&255)*t));return '#'+r.map(v=>v.toString(16).padStart(2,'0')).join('')}
+function mean(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:NaN}
+function std(a){const m=mean(a);return Math.sqrt(mean(a.map(v=>(v-m)*(v-m))))}
+// tabs
+function showTab(id){const b=document.querySelector('.tabs button[data-tab="'+id+'"]');if(!b)return false;$$('.tabs button[data-tab]').forEach(x=>x.classList.toggle('on',x===b));$$('section.tab').forEach(s=>s.classList.toggle('on',s.id===id));window.dispatchEvent(new CustomEvent('tab',{detail:id}));return true;}
+function initTabs(){$$('.tabs button[data-tab]').forEach(b=>b.onclick=()=>{showTab(b.dataset.tab);try{history.replaceState(null,'','#'+b.dataset.tab)}catch(e){}});
+ const h=()=>{const id=(location.hash||'').slice(1);if(id)showTab(id)};window.addEventListener('hashchange',h);setTimeout(h,0);}
+// ---------- CartPole (exact gym dynamics) ----------
+const CP={g:9.8,mc:1.0,mp:0.1,len:0.5,force:10,tau:0.02,thMax:12*2*Math.PI/360,xMax:2.4};
+CP.tm=CP.mc+CP.mp;CP.pml=CP.mp*CP.len;
+function cpReset(r){return [0,0,0,0].map(()=>(r()*0.1-0.05))}
+function cpStep(s,a){let [x,xd,th,thd]=s;const f=a===1?CP.force:-CP.force;const c=Math.cos(th),sn=Math.sin(th);
+  const tmp=(f+CP.pml*thd*thd*sn)/CP.tm;const tha=(CP.g*sn-c*tmp)/(CP.len*(4/3-CP.mp*c*c/CP.tm));const xa=tmp-CP.pml*tha*c/CP.tm;
+  x+=CP.tau*xd;xd+=CP.tau*xa;th+=CP.tau*thd;thd+=CP.tau*tha;const ns=[x,xd,th,thd];
+  const term=x<-CP.xMax||x>CP.xMax||th<-CP.thMax||th>CP.thMax;return {s:ns,term};}
+// draw cartpole on canvas ctx in box (x0,y0,w,h)
+function drawCart(ctx,s,box,o){o=o||{};const {x0,y0,w,h}=box;const sc=w/(2*CP.xMax*1.2);const gy=y0+h*0.82;const cx=x0+w/2+s[0]*sc;
+  ctx.save();ctx.fillStyle=o.bg||'#fff';ctx.fillRect(x0,y0,w,h);
+  ctx.strokeStyle=C.line;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x0+4,gy);ctx.lineTo(x0+w-4,gy);ctx.stroke();
+  [-CP.xMax,CP.xMax].forEach(lim=>{const lx=x0+w/2+lim*sc;ctx.strokeStyle=C.coral;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(lx,gy-h*0.6);ctx.lineTo(lx,gy+6);ctx.stroke();ctx.setLineDash([]);});
+  const cw=Math.max(26,w*0.11),ch=cw*0.45;ctx.fillStyle=o.dead?C.coral:C.navy;ctx.beginPath();ctx.roundRect?ctx.roundRect(cx-cw/2,gy-ch-6,cw,ch,4):ctx.rect(cx-cw/2,gy-ch-6,cw,ch);ctx.fill();
+  ctx.fillStyle=C.grey;[cx-cw*0.3,cx+cw*0.3].forEach(wx=>{ctx.beginPath();ctx.arc(wx,gy-4,cw*0.08,0,7);ctx.fill();});
+  const L=h*0.55,px=cx,py=gy-ch-6;ctx.strokeStyle=o.pole||C.amber;ctx.lineWidth=Math.max(4,w*0.014);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px+L*Math.sin(s[2]),py-L*Math.cos(s[2]));ctx.stroke();
+  ctx.fillStyle='#fff';ctx.strokeStyle=C.navy;ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py,4,0,7);ctx.fill();ctx.stroke();
+  if(o.arrow!=null){ctx.strokeStyle=C.teal;ctx.fillStyle=C.teal;ctx.lineWidth=3;const d=o.arrow===1?1:-1;const ax=cx+d*(cw/2+6),ay=gy-ch/2-6;ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax+d*22,ay);ctx.stroke();ctx.beginPath();ctx.moveTo(ax+d*30,ay);ctx.lineTo(ax+d*20,ay-6);ctx.lineTo(ax+d*20,ay+6);ctx.fill();}
+  ctx.restore();}
+// simple line chart into an <svg>: series=[{pts:[y...] or [[x,y]], color, width, dash, label}]
+function lineChart(svg,series,o){o=o||{};svg.innerHTML='';const W=o.W||600,H=o.H||300;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const m={l:o.ml||52,r:16,t:16,b:o.mb||38};const all=series.flatMap(s=>s.pts.map((p,i)=>Array.isArray(p)?p:[i,p]));
+  let xmin=o.xmin??Math.min(...all.map(p=>p[0])),xmax=o.xmax??Math.max(...all.map(p=>p[0])),ymin=o.ymin??Math.min(...all.map(p=>p[1])),ymax=o.ymax??Math.max(...all.map(p=>p[1]));
+  if(!isFinite(xmin)){xmin=0;xmax=1;ymin=0;ymax=1}if(xmax===xmin)xmax=xmin+1;if(ymax===ymin)ymax=ymin+1;
+  const X=v=>m.l+(v-xmin)/(xmax-xmin)*(W-m.l-m.r),Y=v=>H-m.b-(v-ymin)/(ymax-ymin)*(H-m.t-m.b);
+  const ticks=o.yticks||[ymin,(ymin+ymax)/2,ymax];ticks.forEach(t=>{S('line',{x1:m.l,x2:W-m.r,y1:Y(t),y2:Y(t),stroke:'#E3E7EA'},svg);T(svg,m.l-6,Y(t),o.yfmt?o.yfmt(t):fmt(t,o.yd??0),{anchor:'end',size:13,color:C.muted});});
+  S('line',{x1:m.l,x2:W-m.r,y1:H-m.b,y2:H-m.b,stroke:C.line},svg);
+  if(o.xlabel)T(svg,(m.l+W-m.r)/2,H-10,o.xlabel,{anchor:'middle',size:13,color:C.muted});
+  if(o.ylabel){const t=T(svg,14,(m.t+H-m.b)/2,o.ylabel,{anchor:'middle',size:13,color:C.muted});t.setAttribute('transform',`rotate(-90 14 ${(m.t+H-m.b)/2})`);}
+  (o.hlines||[]).forEach(h=>{S('line',{x1:m.l,x2:W-m.r,y1:Y(h.y),y2:Y(h.y),stroke:h.color||C.grey,'stroke-dasharray':'5 4','stroke-width':1.5},svg);if(h.label)T(svg,W-m.r-4,Y(h.y)-9,h.label,{anchor:'end',size:12,color:h.color||C.grey,bold:true});});
+  series.forEach(s=>{const pts=s.pts.map((p,i)=>Array.isArray(p)?p:[i,p]).filter(p=>isFinite(p[1]));if(!pts.length)return;
+    S('path',{d:pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(''),fill:'none',stroke:s.color||C.teal,'stroke-width':s.width||2.5,'stroke-dasharray':s.dash||'','stroke-linejoin':'round',opacity:s.opacity??1},svg);
+    if(s.dots)pts.forEach(p=>S('circle',{cx:X(p[0]),cy:Y(p[1]),r:3,fill:s.color||C.teal},svg));
+    if(s.label){const p=pts[pts.length-1];T(svg,Math.min(X(p[0])+4,W-m.r-2),Y(p[1]),s.label,{size:12,color:s.color,bold:true,anchor:X(p[0])>W-90?'end':'start'});}});
+  return {X,Y};}
+function histo(svg,vals,o){o=o||{};svg.innerHTML='';const W=o.W||600,H=o.H||260;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const m={l:40,r:14,t:14,b:36};const lo=o.lo??Math.min(...vals),hi=o.hi??Math.max(...vals);const nb=o.bins||20;const bw=(hi-lo)/nb||1;const cnt=new Array(nb).fill(0);
+  vals.forEach(v=>{let k=Math.floor((v-lo)/bw);k=Math.max(0,Math.min(nb-1,k));cnt[k]++;});const mx=Math.max(1,...cnt);
+  const X=v=>m.l+(v-lo)/(hi-lo||1)*(W-m.l-m.r),Y=c=>H-m.b-c/mx*(H-m.t-m.b);
+  cnt.forEach((c,i)=>S('rect',{x:X(lo+i*bw)+1,y:Y(c),width:Math.max(1,X(lo+bw)-X(lo)-2),height:H-m.b-Y(c),fill:o.color||C.amber,rx:2},svg));
+  S('line',{x1:m.l,x2:W-m.r,y1:H-m.b,y2:H-m.b,stroke:C.line},svg);
+  T(svg,m.l,H-14,fmt(lo,o.d??0),{size:13,color:C.muted});T(svg,W-m.r,H-14,fmt(hi,o.d??0),{size:13,color:C.muted,anchor:'end'});
+  if(o.xlabel)T(svg,(W)/2,H-14,o.xlabel,{size:13,color:C.muted,anchor:'middle'});
+  (o.marks||[]).forEach(mk=>{S('line',{x1:X(mk.v),x2:X(mk.v),y1:m.t,y2:H-m.b,stroke:mk.color,'stroke-width':3},svg);const nr=X(mk.v)>W-140;T(svg,X(mk.v)+(nr?-6:5),m.t+10+(mk.dy||0),mk.label,{size:13,color:mk.color,bold:true,anchor:nr?'end':'start'});});
+  return {X};}
+
+initTabs();
+
+// ===== notebook_core.src.html =====
+(()=>{
+
+
+// ---------- shared: PolicyNetwork in JS ----------
+function makeNet(seed){const r=rng(seed);const sz=[4,120,84,2];const L=[];for(let i=0;i<3;i++){const fi=sz[i],fo=sz[i+1],k=1/Math.sqrt(fi);const W=[...Array(fi)].map(()=>[...Array(fo)].map(()=>(r()*2-1)*k));const b=[...Array(fo)].map(()=>(r()*2-1)*k);L.push({W,b,fi,fo});}return L;}
+function fwd(L,x){const acts=[];let h=x;L.forEach((l,i)=>{const o=new Array(l.fo).fill(0);for(let j=0;j<l.fo;j++){let s=l.b[j];for(let q=0;q<l.fi;q++)s+=h[q]*l.W[q][j];o[j]=i<2?Math.max(0,s):s;}acts.push(o);h=o;});return acts;}
+function logsm(z){const m=Math.max(...z);const lse=m+Math.log(z.reduce((a,v)=>a+Math.exp(v-m),0));return z.map(v=>v-lse)}
+// ---------- tab: network -> action ----------
+(()=>{let seed=11,net=makeNet(seed),rs=rng(5),ra=rng(9),obs=[],acts=[],sel=0;
+ function newObs(){obs=[...Array(4)].map(()=>[rs()*1.6-0.8,rs()*1.6-0.8,(rs()*0.3-0.15),rs()*1.6-0.8]);}
+ function sample(){acts=obs.map(o=>{const z=fwd(net,o)[2];const lp=logsm(z);return ra()<Math.exp(lp[1])?1:0;});}
+ const tb=(lbl,shp,rows,cls)=>`<div class="tblock"><div class="lbl">${lbl}</div><div class="shp">${shp}</div><table class="tens">${rows.map((r,i)=>`<tr data-row="${i}">${r.map((v,j)=>`<td class="${cls?cls(i,j):''}">${v}</td>`).join('')}</tr>`).join('')}</table></div>`;
+ function render(){const Z=obs.map(o=>fwd(net,o)[2]),LP=Z.map(logsm);
+  $('#n_pipe').innerHTML=tb('obs','(4, 4)',obs.map(o=>o.map(v=>fmt(v,2))))+'<div class="arr">→</div>'+
+   tb('logits = policy_network(obs)','(4, 2)',Z.map(z=>z.map(v=>fmt(v,3))))+'<div class="arr">→</div>'+
+   tb('log_probs = log_softmax(logits)','(4, 2)',LP.map(l=>l.map(v=>fmt(v,3))),(i,j)=>j===acts[i]?'hl':'')+'<div class="arr">→</div>'+
+   tb('probs = log_probs.exp()','(4, 2)',LP.map(l=>l.map(v=>fmt(Math.exp(v),3))))+'<div class="arr">→</div>'+
+   tb('actions = multinomial(probs)','(4,)',acts.map(a=>[a+(a?' right':' left')]),()=>'act')+'<div class="arr">→</div>'+
+   tb('logprobs = gather(log_probs, actions)','(4,)',acts.map((a,i)=>[fmt(LP[i][a],3)]),()=>'hl');
+  $$('#n_pipe tr[data-row]').forEach(tr=>{tr.style.cursor='pointer';tr.style.opacity=(+tr.dataset.row===sel)?1:0.75;tr.onclick=()=>{sel=+tr.dataset.row;render()};});
+  const A=fwd(net,obs[sel]);const svg=$('#n_mlp');svg.innerHTML='';svg.setAttribute('viewBox','0 0 860 300');
+  T(svg,10,18,'env '+sel+': inside the network',{size:16,bold:true});
+  const col=(x,vals,lbl,w)=>{const mx=Math.max(1e-6,...vals.map(Math.abs));const h=230/vals.length;vals.forEach((v,i)=>{S('rect',{x,y:40+i*h,width:w,height:Math.max(1,h-0.4),fill:v===0?'#E3E7EA':(v>0?mix('#FFFFFF',C.teal,Math.min(1,0.25+0.75*v/mx)):mix('#FFFFFF',C.coral,Math.min(1,0.25+0.75*-v/mx)))},svg)});T(svg,x+w/2,288,lbl,{anchor:'middle',size:13,color:C.muted});};
+  col(30,obs[sel],'obs (4)',60);col(200,A[0],'ReLU (120)',60);col(370,A[1],'ReLU (84)',60);
+  const z=A[2];[0,1].forEach(i=>{S('rect',{x:560,y:80+i*90,width:90,height:70,rx:8,fill:C.purpleLt},svg);T(svg,605,105+i*90,['left','right'][i],{anchor:'middle',size:14,color:C.muted});T(svg,605,128+i*90,fmt(z[i],3),{anchor:'middle',size:18,bold:true,color:C.purple});});
+  T(svg,605,288,'logits (2) · no ReLU',{anchor:'middle',size:13,color:C.muted});
+  const off=A[0].filter(v=>v===0).length+A[1].filter(v=>v===0).length;T(svg,700,120,off+' of 204 hidden',{size:14,color:C.muted});T(svg,700,140,'units are 0 (off)',{size:14,color:C.muted});
+  [[95,195],[265,365],[435,555]].forEach(([a,b])=>S('line',{x1:a,x2:b,y1:155,y2:155,stroke:C.line,'stroke-width':2},svg));}
+ $('#n_sample').onclick=()=>{sample();render()};$('#n_states').onclick=()=>{newObs();sample();render()};$('#n_init').onclick=()=>{seed++;net=makeNet(seed);sample();render()};
+ newObs();sample();render();})();
+// ---------- tab: fill the buffer ----------
+(()=>{const E=8,TMAX=60,r=rng(31);let S_,t,buf,phase,timer=null,last=null,flash=new Array(E).fill(0);
+ const pol=s=>sig(5*s[2]+s[3]);
+ const LINES=['obs, _ = envs.reset()      # full reset','for t in range(num_steps_per_rollout):','    actions, logprobs = get_actions(obs)','    new_obs, r, term, trunc, _ = envs.step(actions)','    done = term | trunc','    rollout.add_step(obs, actions, logprobs, r, done)','    obs = new_obs'];
+ function reset(){S_=[...Array(E)].map(()=>cpReset(r));t=0;buf=[];phase=2;last=null;render(0);}
+ function code(hl){$('#f_code').innerHTML=LINES.map((l,i)=>`<div class="${i===hl?'on':''}">${l.replace(/ /g,'&nbsp;')}</div>`).join('');}
+ function doPhase(){if(t>=TMAX)return;
+  if(phase===2){const a=S_.map(s=>r()<pol(s)?1:0);const lp=S_.map((s,e)=>Math.log(a[e]?pol(s):1-pol(s)));last={obs:S_.map(s=>s.slice()),a,lp};}
+  else if(phase===3){const res=S_.map((s,e)=>cpStep(s,last.a[e]));last.res=res;}
+  else if(phase===4){last.done=last.res.map(o=>o.term);}
+  else if(phase===5){buf.push({a:last.a,done:last.done});}
+  else if(phase===6){S_=last.res.map((o,e)=>{if(o.term){flash[e]=6;return cpReset(r)}return o.s});t++;}
+  const shown=phase;phase=phase===6?2:phase+1;render(shown);}
+ function fullStep(){do{doPhase()}while(phase!==2&&t<TMAX)}
+ function render(hl){code(hl);
+  const c=$('#f_carts').getContext('2d');c.clearRect(0,0,900,250);for(let e=0;e<E;e++){const x=(e%4)*225,y=Math.floor(e/4)*125;drawCart(c,S_[e],{x0:x+2,y0:y+2,w:221,h:121},{bg:flash[e]>0?'#FBE4DC':'#fff',arrow:last&&last.a?last.a[e]:null});c.fillStyle=C.muted;c.font='bold 13px Calibri,Carlito,sans-serif';c.fillText('env '+e,x+8,y+18);if(flash[e]>0)flash[e]--;}
+  const g=$('#f_grid').getContext('2d');g.clearRect(0,0,900,260);const cw=820/TMAX,ch=26;g.font='13px Calibri,Carlito,sans-serif';g.fillStyle=C.muted;g.textAlign='right';
+  for(let e=0;e<E;e++){g.fillStyle=C.muted;g.fillText('env '+e,52,18+e*ch+12);for(let k=0;k<TMAX;k++){const b=buf[k];g.fillStyle=!b?'#F2F4F5':(b.done[e]?C.coral:(b.a[e]?'#BFE0DF':'#D9CFEF'));g.fillRect(60+k*cw,14+e*ch,cw-1,ch-3);}}
+  g.textAlign='left';g.fillStyle=C.ink;g.font='bold 14px Calibri,Carlito,sans-serif';g.fillText(`rollout buffer: ${buf.length} of ${TMAX} columns filled · shape (num_envs=8, t=${buf.length})`,60,240);
+  if(last){const rows=S_.map((s,e)=>[]);const blk=(lbl,shp,vals,cls)=>`<div class="tblock"><div class="lbl">${lbl}</div><div class="shp">${shp}</div><table class="tens">${vals.map(v=>`<tr>${(Array.isArray(v)?v:[v]).map(x=>`<td class="${cls?cls(x):''}">${x}</td>`).join('')}</tr>`).join('')}</table></div>`;
+   $('#f_tens').innerHTML=blk('obs (acted on)','(8, 4)',last.obs.map(o=>o.map(v=>fmt(v,2))))+blk('actions','(8,)',last.a,()=>'act')+(last.done?blk('dones','(8,)',last.done.map(d=>d?'True':'False'),x=>x==='True'?'done':''):'');}
+  else $('#f_tens').innerHTML='<span class="note">press "one timestep"</span>';}
+ $('#f_step').onclick=fullStep;$('#f_line').onclick=doPhase;$('#f_reset').onclick=reset;
+ $('#f_play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('#f_play').textContent='▶ play';return}$('#f_play').textContent='❚❚ pause';timer=setInterval(()=>{if(t>=TMAX){clearInterval(timer);timer=null;$('#f_play').textContent='▶ play';return}fullStep()},120)};
+ reset();})();
+// ---------- tab: returns by hand ----------
+(()=>{let R=[0,0,1,0,1],D=[0,0,1,0,1],i=null,G=0,Gb=0,ret=[],retb=[];const N=()=>R.length;
+ const LINES=['G = 0','for i in reversed(range(num_steps)):','    G = rewards[:, i] + gamma * G * (~done[:, i])','    returns[:, i] = G'];
+ function load(r,d,g){R=r.slice();D=d.slice();$('#h_gam').value=g;restart();}
+ function restart(){i=null;G=0;Gb=0;ret=new Array(N()).fill(null);retb=new Array(N()).fill(null);render(0,'');}
+ function back(){const g=+$('#h_gam').value;if(i===null)i=N();if(i<=0)return;i--;const old=G;G=R[i]+g*G*(D[i]?0:1);Gb=R[i]+g*Gb;ret[i]=G;retb[i]=Gb;
+  render(2,`i = ${i}:  G = r[${i}] + γ·G·(1 − done[${i}]) = ${fmt(R[i],2)} + ${fmt(g,2)} × ${fmt(old,3)} × ${D[i]?0:1} = <b>${fmt(G,3)}</b>`);}
+ function render(hl,msg){const n=N();const ed=$('#h_edit');ed.style.gridTemplateColumns=`110px repeat(${n},minmax(0,1fr))`;
+  let h='<div class="note">t</div>'+R.map((_,k)=>`<div class="note" style="text-align:center">${k}</div>`).join('');
+  h+='<b>rewards</b>'+R.map((v,k)=>`<input type="number" step="0.5" data-r="${k}" value="${v}" aria-label="reward ${k}">`).join('');
+  h+='<b>done</b>'+D.map((v,k)=>`<button class="dn ${v?'on':''}" data-d="${k}">${v}</button>`).join('');
+  h+='<b style="color:var(--teal)">returns</b>'+ret.map((v,k)=>`<div class="cell ${v!==null?'g':''} ${k===i?'cur':''}">${v===null?'':fmt(v,3)}</div>`).join('');
+  if($('#h_bug').checked)h+='<b style="color:var(--coral)">no mask (bug)</b>'+retb.map((v,k)=>`<div class="cell ${v!==null?'bad':''}">${v===null?'':fmt(v,3)}</div>`).join('');
+  ed.innerHTML=h;
+  $$('#h_edit [data-r]').forEach(x=>x.onchange=()=>{R[+x.dataset.r]=+x.value;restart()});$$('#h_edit [data-d]').forEach(x=>x.onclick=()=>{D[+x.dataset.d]^=1;restart()});
+  $('#h_code').innerHTML=LINES.map((l,k)=>`<div class="${k===hl?'on':''}">${l.replace(/ /g,'&nbsp;')}</div>`).join('')+`<div style="margin-top:8px;color:#9AA0B4">${msg||'G (carried in from the right) = '+fmt(G,3)}</div>`;}
+ $('#h_back').onclick=back;$('#h_all').onclick=()=>{if(i===null)i=N();while(i>0)back()};$('#h_reset').onclick=restart;$('#h_bug').onchange=()=>render(i===null?0:2,'');$('#h_gam').onchange=restart;
+ $('#h_ex1').onclick=()=>load([0,0,1,0,1],[0,0,1,0,1],0.9);$('#h_ex2').onclick=()=>load([1,1,1,1],[0,1,0,0],0.5);$('#h_ex3').onclick=()=>load([1,1,1,1,1,1,1,1],[0,0,1,0,0,0,0,0],0.99);
+ restart();})();
+
+})();
+
+// ===== rollout_explorer.src.html =====
+(()=>{
+
+
+const E=16,TT=150,W=[0,0,5,1];let seed=4,R=null,sel=[0,0];
+function rollout(){const r=rng(seed);const obs=[],act=[],lp=[],rew=[],dn=[],pr=[];
+ for(let e=0;e<E;e++){let s=cpReset(r);obs.push([]);act.push([]);lp.push([]);rew.push([]);dn.push([]);pr.push([]);
+  for(let t=0;t<TT;t++){const p=sig(W[2]*s[2]+W[3]*s[3]);const a=r()<p?1:0;const o=cpStep(s,a);obs[e].push(s);act[e].push(a);pr[e].push(p);lp[e].push(Math.log(a?p:1-p));rew[e].push(1);dn[e].push(o.term);s=o.term?cpReset(r):o.s;}}
+ return {obs,act,lp,rew,dn,pr};}
+function computeReturns(g,mask){const G=[...Array(E)].map(()=>new Array(TT));const cur=new Array(E).fill(0);for(let i=TT-1;i>=0;i--)for(let e=0;e<E;e++){cur[e]=R.rew[e][i]+g*cur[e]*(mask&&R.dn[e][i]?0:1);G[e][i]=cur[e];}return G;}
+const gm=()=>+$('#gam').value;
+// heatmap
+const HM={x0:46,y0:24,w:840,h:370};
+function cellXY(e,t){return [HM.x0+t*HM.w/TT,HM.y0+e*HM.h/E]}
+function heat(cv,colorFn,o){o=o||{};const c=cv.getContext('2d');c.clearRect(0,0,900,420);const cw=HM.w/TT,ch=HM.h/E;
+ for(let e=0;e<E;e++)for(let t=0;t<TT;t++){const [x,y]=cellXY(e,t);c.fillStyle=colorFn(e,t);c.fillRect(x,y,cw+0.4,ch-2);}
+ for(let e=0;e<E;e++)for(let t=0;t<TT;t++)if(R.dn[e][t]){const [x,y]=cellXY(e,t);c.fillStyle=C.coral;c.fillRect(x+cw-2,y-1,3.5,ch);}
+ if(o.sweepCol!=null){const [x]=cellXY(0,o.sweepCol);c.strokeStyle=C.ink;c.lineWidth=2.5;c.strokeRect(x,HM.y0-3,HM.w/TT,HM.h+2);}
+ c.fillStyle=C.muted;c.font='14px Calibri,Carlito,sans-serif';c.textAlign='right';for(let e=0;e<E;e+=3)c.fillText('env '+e,HM.x0-4,HM.y0+(e+0.7)*ch);
+ c.textAlign='center';for(let t=0;t<=TT;t+=25){const [x]=cellXY(0,t);c.fillText(t,x,HM.y0+HM.h+16);}
+ const [sx,sy]=cellXY(sel[0],sel[1]);c.strokeStyle=C.navy;c.lineWidth=2;c.strokeRect(sx-1,sy-1,cw+2,ch);}
+function pick(cv,cb){cv.onclick=ev=>{const b=cv.getBoundingClientRect();const x=(ev.clientX-b.left)*900/b.width,y=(ev.clientY-b.top)*420/b.height;const t=Math.floor((x-HM.x0)/(HM.w/TT)),e=Math.floor((y-HM.y0)/(HM.h/E));if(t<0||t>=TT||e<0||e>=E)return;sel=[e,t];cb();renderAll();};}
+// tab1
+function render1(){heat($('#h1'),(e,t)=>R.act[e][t]?'#BFE0DF':'#D9CFEF');const [e,t]=sel;const s=R.obs[e][t];
+ $('#cell').innerHTML=`<h3>cell [env ${e}, step ${t}]</h3><p class="mono" style="font-size:.88rem;line-height:1.55">obs[${e}, ${t}] = [${s.map(v=>fmt(v,3)).join(', ')}]<br>π(right | s) = ${fmt(R.pr[e][t],3)}<br>actions[${e}, ${t}] = ${R.act[e][t]} (${R.act[e][t]?'right':'left'})<br>logprobs[${e}, ${t}] = ${fmt(R.lp[e][t],3)}<br>rewards[${e}, ${t}] = 1.0<br>dones[${e}, ${t}] = ${R.dn[e][t]?'<b style="color:#F07A57">True</b>':'False'}</p>`;
+ drawCart($('#cp1').getContext('2d'),s,{x0:0,y0:0,w:900,h:200},{arrow:R.act[e][t],dead:R.dn[e][t]});}
+// tab2
+let sweepAt=null,sweepT=null;
+function render2(){$('#gamv').textContent=gm().toFixed(3);const G=computeReturns(gm(),!$('#nomask').checked);const mx=Math.max(...G.flat());
+ heat($('#h2'),(e,t)=>(sweepAt!=null&&t<sweepAt)?'#F7F8F9':mix('#FFFFFF',C.teal,Math.min(1,G[e][t]/mx)),{sweepCol:sweepAt});
+ const e=sel[0];const ser=[{pts:G[e],color:C.teal,width:3,label:'G_t'}];const hl=[];
+ const svg=$('#rowchart');const {X,Y}=lineChart(svg,ser,{W:900,H:220,ymin:0,ymax:mx,yticks:[0,Math.round(mx/2),Math.round(mx)],xlabel:'env '+e+': step t',ylabel:'G_t'});
+ R.dn[e].forEach((d,t)=>{if(d)S('line',{x1:X(t),x2:X(t),y1:16,y2:182,stroke:C.coral,'stroke-width':2,'stroke-dasharray':'4 3'},svg);});}
+$('#sweep').onclick=()=>{clearInterval(sweepT);sweepAt=TT;sweepT=setInterval(()=>{sweepAt-=3;if(sweepAt<=0){sweepAt=null;clearInterval(sweepT);}render2();},30);};
+// tab3
+function advantages(){let G=computeReturns(gm(),true);if($('#usenorm').checked){const f=G.flat(),m=mean(f),s=std(f)+1e-8;G=G.map(r=>r.map(v=>(v-m)/s));}
+ const b=new Array(TT).fill(0);for(let t=0;t<TT;t++){let s=0;for(let e=0;e<E;e++)s+=G[e][t];b[t]=s/E;}
+ const A=G.map(r=>r.map((v,t)=>$('#usebase').checked?v-b[t]:v));return {A,b,G};}
+function render3(){const {A,b}=advantages();const mx=Math.max(...A.flat().map(Math.abs));
+ heat($('#h3'),(e,t)=>A[e][t]>=0?mix('#FFFFFF',C.teal,Math.min(1,A[e][t]/mx)*0.95+0.05):mix('#FFFFFF',C.coral,Math.min(1,-A[e][t]/mx)*0.95+0.05));
+ const f=A.flat();$('#fracpos').textContent=Math.round(100*f.filter(v=>v>0).length/f.length)+'%';$('#fracneg').textContent=Math.round(100*f.filter(v=>v<0).length/f.length)+'%';
+ lineChart($('#basechart'),[{pts:b,color:C.purple,width:3,label:'b(t)'}],{W:900,H:200,xlabel:'step t',ylabel:'baseline',yd:1});}
+// tab4
+function render4(){const {A}=advantages();const P=[...Array(E)].map((_,e)=>R.act[e].map((a,t)=>A[e][t]*((a===1?1:0)-R.pr[e][t])));const mx=Math.max(...P.flat().map(Math.abs));
+ heat($('#h4'),(e,t)=>P[e][t]>=0?mix('#FFFFFF',C.teal,Math.min(1,P[e][t]/mx)):mix('#FFFFFF',C.purple,Math.min(1,-P[e][t]/mx)));
+ const nb=12,lo=-0.21,hi=0.21,sum=new Array(nb).fill(0),cnt=new Array(nb).fill(0);for(let e=0;e<E;e++)for(let t=0;t<TT;t++){const th=R.obs[e][t][2];let k=Math.floor((th-lo)/(hi-lo)*nb);k=Math.max(0,Math.min(nb-1,k));sum[k]+=P[e][t];cnt[k]++;}
+ const svg=$('#pushchart');svg.innerHTML='';svg.setAttribute('viewBox','0 0 900 230');const mxs=Math.max(...sum.map(Math.abs))||1;const y0=115,bw=840/nb;
+ S('line',{x1:46,x2:886,y1:y0,y2:y0,stroke:C.line},svg);sum.forEach((v,k)=>{const h=v/mxs*90;S('rect',{x:46+k*bw+4,y:Math.min(y0,y0-h),width:bw-8,height:Math.abs(h),fill:v>=0?C.teal:C.purple,rx:3},svg);});
+ T(svg,46,215,'pole leaning left',{size:14,color:C.muted});T(svg,886,215,'pole leaning right',{size:14,color:C.muted,anchor:'end'});T(svg,466,215,'θ = 0',{size:14,color:C.muted,anchor:'middle'});
+ T(svg,50,22,'net push → right',{size:14,bold:true,color:C.teal});T(svg,50,190,'net push → left',{size:14,bold:true,color:C.purple});}
+function renderAll(){const tab=$('section.tab.on').id;if(tab==='grid')render1();if(tab==='ret')render2();if(tab==='adv')render3();if(tab==='push')render4();}
+['#h1','#h2','#h3','#h4'].forEach(q=>pick($(q),()=>{}));
+['#gam','#nomask'].forEach(q=>$(q).oninput=render2);['#usebase','#usenorm'].forEach(q=>$(q).oninput=render3);
+window.addEventListener('tab',renderAll);$('#newroll').onclick=()=>{seed++;R=rollout();renderAll();};
+R=rollout();renderAll();
+
+})();
+</script><!--presenter-->
+<style>
+.placard.pc>h3{cursor:pointer}
+.placard.pc>h3::after{content:" ▸";font-weight:400;opacity:.45}
+.placard.pc.open>h3::after{content:" ▾"}
+.placard.pc:not(.open)>*:not(h3){display:none}
+.placard.pc:not(.open){padding-bottom:10px}
+.placard.pc:not(.open)>h3{margin:0}
+#pnote{position:fixed;right:14px;bottom:12px;font:12px system-ui,sans-serif;color:#8a90a0;background:#fff;border:1px solid #e3e5ea;border-radius:8px;padding:4px 9px;cursor:pointer;z-index:99}
+</style>
+<script>
+(function(){
+  function setup(){
+    document.querySelectorAll('.placard').forEach(function(p){
+      if(p.classList.contains('pc')||p.id||p.querySelector('[id]')) return;
+      if(p.querySelector('table,canvas,svg,input,select,button,textarea,pre')) return;
+      var h=p.querySelector(':scope>h3'); if(!h) return;
+      var kids=[].slice.call(p.children).filter(function(c){return c!==h});
+      if(!kids.length) return;
+      p.classList.add('pc');
+      h.addEventListener('click',function(){p.classList.toggle('open')});
+    });
+  }
+  var all=false;
+  function toggleAll(){all=!all;document.querySelectorAll('.placard.pc').forEach(function(p){p.classList.toggle('open',all)});}
+  document.addEventListener('keydown',function(e){if((e.key==='n'||e.key==='N')&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){toggleAll();}});
+  window.addEventListener('load',function(){
+    setup();
+    var b=document.createElement('div');b.id='pnote';b.textContent='notes: click a heading · N = all';b.onclick=toggleAll;document.body.appendChild(b);
+    new MutationObserver(setup).observe(document.body,{childList:true,subtree:true});
+  });
+})();
+</script>
+</body></html>

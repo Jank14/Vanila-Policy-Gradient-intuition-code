@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Returns and J — TARA RL</title>
+<style>:root{--teal:#0E7C7B;--teal-lt:#DCEEED;--coral:#E4572E;--coral-lt:#FBE4DC;--purple:#6C4AB6;--purple-lt:#EAE3F7;--amber:#B7791F;--amber-lt:#FDF1D6;--blue:#2F6DB5;--blue-lt:#DDE8F6;--ink:#1A1A1A;--muted:#4F5A63;--line:#C9D0D5;--bg:#F2F4F5;--code:#1E1E2E;--grey:#8A949C;--page:#FFFFFF}
+*{box-sizing:border-box}
+html{font-size:20px}
+@media (min-width:1700px){html{font-size:23px}}
+@media (max-width:900px){html{font-size:16px}}
+body{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif;margin:0;background:var(--page);color:var(--ink);line-height:1.35}
+.wrap{max-width:1800px;margin:0 auto;padding:20px 30px 40px}
+.kicker{font-size:.78rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
+h1{font-size:1.9rem;margin:.1em 0 .15em}
+.sub{color:var(--muted);font-size:1.02rem;margin:0 0 .6rem;max-width:80ch}
+.tabs{display:flex;flex-wrap:wrap;gap:10px;margin:.5rem 0 1rem;align-items:center}
+.tabs button{font:inherit;font-size:.95rem;font-weight:700;padding:.45rem .9rem;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.tabs button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+section.tab{display:none}
+section.tab.on{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:24px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.stage{border:2px solid var(--line);border-radius:18px;padding:12px;background:#fff;position:relative}
+.stage canvas,.stage svg{width:100%;height:auto;display:block}
+.side{display:flex;flex-direction:column;gap:14px}
+.placard{border-radius:16px;padding:14px 18px;background:var(--bg);font-size:1.02rem}
+.placard h3{margin:0 0 .3rem;font-size:1.15rem}
+.placard p{margin:.25rem 0}
+.placard.teal{background:var(--teal-lt)}.placard.teal h3{color:var(--teal)}
+.placard.coral{background:var(--coral-lt)}.placard.coral h3{color:var(--coral)}
+.placard.purple{background:var(--purple-lt)}.placard.purple h3{color:var(--purple)}
+.placard.amber{background:var(--amber-lt)}.placard.amber h3{color:var(--amber)}
+.placard.dark{background:var(--code);color:#E4E4EF}.placard.dark h3{color:#fff}
+.ctl{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;font-size:.98rem;margin:10px 0}
+.ctl label{font-weight:700;color:var(--muted)}
+.ctl input[type=range]{width:180px;accent-color:var(--teal)}
+.ctl select{font:inherit;padding:.25rem .4rem;border-radius:8px;border:2px solid var(--line)}
+button.b{font:inherit;font-size:.98rem;font-weight:700;padding:.45rem .95rem;border-radius:12px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+button.b.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+button.b.coral{background:var(--coral);border-color:var(--coral);color:#fff}
+button.b:disabled{opacity:.4;cursor:default}
+.mono,code{font-family:"Courier New","DejaVu Sans Mono",monospace}
+code{background:var(--bg);padding:0 .25em;border-radius:5px}
+.placard.dark code{background:#2C2C40}
+.stat{display:flex;gap:10px;flex-wrap:wrap}
+.stat div{flex:1;min-width:110px;border-radius:14px;padding:8px 12px;background:var(--bg)}
+.stat b{display:block;font-size:1.55rem;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.85rem}
+.note{color:var(--grey);font-size:.85rem;font-style:italic}
+table.t{border-collapse:separate;border-spacing:3px;font-size:.92rem;font-variant-numeric:tabular-nums}
+table.t td,table.t th{padding:4px 8px;border-radius:7px;text-align:center}
+table.t th{color:var(--muted);font-weight:700}
+.chk{display:inline-flex;gap:6px;align-items:center;font-weight:700;color:var(--muted);cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--teal)}
+.keys{position:fixed;right:14px;bottom:10px;font-size:.75rem;color:var(--grey);background:#fff;padding:4px 10px;border-radius:10px;border:1px solid var(--line)}
+svg text{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem}
+
+#tape{max-height:330px;overflow:auto}
+#tape table{width:100%}
+#tape td{background:var(--bg)}
+#tape tr.slip td{background:var(--coral-lt)}
+#tape tr.end td{background:var(--amber-lt)}
+.probs{display:flex;gap:8px;align-items:flex-end;height:110px}
+.probs div{flex:1;text-align:center;font-size:.85rem;color:var(--muted)}
+.probs i{display:block;background:var(--teal);border-radius:5px 5px 0 0;margin:0 auto 4px;width:70%}
+
+.tabs.grouped{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:flex-start}
+.tabs.grouped .grp{display:flex;flex-direction:column;gap:5px}
+.tabs.grouped .grp>span{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tabs.grouped .grp>div{display:flex;gap:6px;flex-wrap:wrap}
+.tabs.grouped button{font-size:.9rem;padding:.4rem .75rem}
+.tabs.grouped button .n{display:inline-block;min-width:1.3em;margin-right:.35em;color:var(--teal);font-variant-numeric:tabular-nums}
+.tabs.grouped button.on .n{color:#fff}
+</style></head><body><div class="wrap">
+<div class="kicker">TARA · RL week 1 · interactive 05</div>
+<h1>Returns, and J as an average</h1>
+<p class="sub">Play one game and read every r and G; then play many games and watch their average become J.</p>
+<div class="tabs grouped"><div class="grp"><span>Return & J</span><div><button data-tab="play" class="on"><span class="n">1</span>One game: r and G</button><button data-tab="many" class=""><span class="n">2</span>Many games → J</button><button data-tab="land" class=""><span class="n">3</span>The J landscape</button></div></div></div>
+<section class="tab on" id="play"><div class="grid">
+ <div><div class="stage"><canvas id="g1" width="750" height="600"></canvas></div>
+  <div class="ctl"><button class="b primary" data-a="0">↑ up</button><button class="b primary" data-a="3">← left</button><button class="b primary" data-a="2">↓ down</button><button class="b primary" data-a="1">→ right</button><button class="b" id="p_reset">new game</button><button class="b" id="p_replay">replay my moves, new dice</button></div>
+  <div class="ctl"><label>slip probability</label><input type="range" id="p_slip" min="0" max="0.5" step="0.05" value="0.2"><span id="p_slipv" class="mono"></span><label>γ</label><input type="range" id="p_gam" min="0.5" max="1" step="0.01" value="0.9"><span id="p_gamv" class="mono"></span></div>
+ </div>
+ <div class="side">
+  <div class="stat"><div><b id="p_G0">0</b><span>G₀ — the return of this game</span></div><div><b id="p_stat">playing</b><span>status</span></div></div>
+  <div id="tape"></div>
+  <div class="placard teal"><h3>Read the tape bottom-up</h3><p>Each new reward changes <b>every earlier</b> G<sub>t</sub> — that's why G is computed backwards from the end: G<sub>t</sub> = r<sub>t</sub> + γ·G<sub>t+1</sub>. Drag γ and watch the early rows shrink.</p></div>
+  <div class="placard coral"><h3>Pink rows = the dice</h3><p>You chose one way and slid another. That's T(s′|s,a) at work. "Replay" repeats your exact moves with fresh dice: same policy, different τ, different G.</p></div>
+ </div></div></section>
+<section class="tab" id="many"><div class="grid">
+ <div><div class="stage"><svg id="m_hist"></svg><svg id="m_run"></svg></div></div>
+ <div class="side">
+  <div class="placard"><h3>A policy with two knobs</h3><p>A simple π<sub>θ</sub>: the same probabilities in every square, from a softmax over logits (θ<sub>up</sub>, θ<sub>right</sub>, 0, 0) for (up, right, down, left).</p>
+   <div class="ctl"><label>θ_up</label><input type="range" id="m_tu" min="-2" max="4" step="0.1" value="1"><span id="m_tuv" class="mono"></span></div>
+   <div class="ctl"><label>θ_right</label><input type="range" id="m_tr" min="-2" max="4" step="0.1" value="1"><span id="m_trv" class="mono"></span></div>
+   <div class="probs" id="m_probs"></div></div>
+  <div class="ctl"><button class="b primary" id="m_go">▶ play 200 games</button><button class="b" id="m_one">play 1 game</button></div>
+  <div class="stat"><div><b id="m_J">—</b><span>mean return so far ≈ J(θ)</span></div><div><b id="m_sd">—</b><span>std of one game</span></div><div><b id="m_n">0</b><span>games</span></div></div>
+  <div class="placard teal"><h3>One game is a terrible estimate</h3><p>Look at the spread of single returns. The running mean (bottom chart) wobbles at first, then settles: its error shrinks like 1/√N. That's why the notebook plays 32 envs at once.</p></div>
+  <div class="canvaswrap stage"><canvas id="m_heat" width="500" height="400"></canvas><div class="note">where the games went (visit counts)</div></div>
+ </div></div></section>
+<section class="tab" id="land"><div class="grid">
+ <div><div class="stage"><canvas id="l_cv" width="760" height="660"></canvas></div>
+  <div class="ctl"><button class="b primary" id="l_compute">▶ estimate the whole landscape</button><span class="note" id="l_prog"></span></div></div>
+ <div class="side">
+  <div class="placard"><h3>Every point is a policy</h3><p>x = θ<sub>right</sub>, y = θ<sub>up</sub>. The colour is J(θ) estimated from 60 games at that point: <span style="color:var(--coral)"><b>low</b></span> → <span style="color:var(--teal)"><b>high</b></span>. Click anywhere to "be" that policy.</p></div>
+  <div class="stat"><div><b id="l_here">—</b><span>J at your point (20 fresh games)</span></div><div><b id="l_se">—</b><span>± standard error</span></div></div>
+  <div class="ctl"><button class="b" id="l_again">sample again</button></div>
+  <div class="placard teal"><h3>Training = climbing this</h3><p>Gradient ascent wants to walk uphill. But in real RL we never get this map — it took thousands of games to draw. Press "sample again": the height of a single point is already noisy.</p></div>
+  <div class="placard purple"><h3>So what does the policy gradient do?</h3><p>It estimates the <b>slope</b> at your point from the same few games you just played — no map, no physics. Part 3 is how.</p></div>
+ </div></div></section>
+<section class="tab" id="dice" aria-hidden="true"><div class="grid">
+ <div><div class="stage"><canvas id="dc_cv" width="750" height="600"></canvas></div>
+  <div class="ctl"><label>action</label><button class="b primary" data-da="0">↑</button><button class="b primary" data-da="3">←</button><button class="b primary" data-da="2">↓</button><button class="b primary" data-da="1">→</button>
+   <label>slip</label><input type="range" id="dc_slip" min="0" max="0.6" step="0.05" value="0.2"><span id="dc_slipv" class="mono"></span></div>
+  <div class="ctl"><button class="b" id="dc_r1">roll the dice once</button><button class="b primary" id="dc_r100">roll 100 times</button><button class="b" id="dc_clear">clear counts</button><span class="note">click any square to stand there</span></div>
+ </div>
+ <div class="side">
+  <div class="placard"><h3>One row of T</h3><p>You stand on the dark square and choose an action. The arrows show <b>T(s′ | s, a)</b>: the probability of landing on each square.</p></div>
+  <table class="t" id="dc_tab" style="width:100%"></table>
+  <svg id="dc_bars"></svg>
+  <div class="placard teal"><h3>The agent only ever samples</h3><p>It never sees these numbers. Each step the world rolls the dice once. Roll 100 times: the landing counts approach the probabilities.</p></div>
+  <div class="placard amber"><h3>Edges and walls</h3><p>Slip into the wall or off the board and you stay put — so "stay here" can get probability too. Every row still adds up to 1. Slide slip to 0: deterministic, one arrow with probability 1.</p></div>
+ </div></div></section>
+</div>
+<script>// ---------- shared helpers for the TARA RL labs ----------
+const C = {teal:'#0E7C7B',tealLt:'#DCEEED',coral:'#E4572E',coralLt:'#FBE4DC',purple:'#6C4AB6',purpleLt:'#EAE3F7',
+  amber:'#B7791F',amberLt:'#FDF1D6',blue:'#2F6DB5',blueLt:'#DDE8F6',ink:'#1A1A1A',muted:'#4F5A63',line:'#C9D0D5',bg:'#F2F4F5',grey:'#8A949C',navy:'#20202F'};
+const NS='http://www.w3.org/2000/svg';
+function S(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs||{})e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function T(parent,x,y,txt,o){o=o||{};const e=S('text',{x,y,'font-size':o.size||16,fill:o.color||C.ink,'font-weight':o.bold?700:400,'text-anchor':o.anchor||'start','dominant-baseline':o.base||'middle'},parent);if(o.mono)e.setAttribute('font-family','Courier New, monospace');if(o.italic)e.setAttribute('font-style','italic');e.textContent=txt;return e;}
+function $(q){return document.querySelector(q)}
+function $$(q){return [...document.querySelectorAll(q)]}
+function fmt(v,d=2){if(!isFinite(v))return '—';const s=v.toFixed(d);return (/^-0\.?0*$/.test(s))?s.slice(1):s.replace('-','−')}
+function sig(z){return 1/(1+Math.exp(-z))}
+function rng(seed){let s=(seed>>>0)||1;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+function gauss(r){let u=0,v=0;while(u===0)u=r();v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function softmax(z){const m=Math.max(...z);const e=z.map(v=>Math.exp(v-m));const s=e.reduce((a,b)=>a+b,0);return e.map(v=>v/s)}
+function mix(a,b,t){const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16);const r=[16,8,0].map(s=>Math.round(((pa>>s)&255)*(1-t)+((pb>>s)&255)*t));return '#'+r.map(v=>v.toString(16).padStart(2,'0')).join('')}
+function mean(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:NaN}
+function std(a){const m=mean(a);return Math.sqrt(mean(a.map(v=>(v-m)*(v-m))))}
+// tabs
+function showTab(id){const b=document.querySelector('.tabs button[data-tab="'+id+'"]');if(!b)return false;$$('.tabs button[data-tab]').forEach(x=>x.classList.toggle('on',x===b));$$('section.tab').forEach(s=>s.classList.toggle('on',s.id===id));window.dispatchEvent(new CustomEvent('tab',{detail:id}));return true;}
+function initTabs(){$$('.tabs button[data-tab]').forEach(b=>b.onclick=()=>{showTab(b.dataset.tab);try{history.replaceState(null,'','#'+b.dataset.tab)}catch(e){}});
+ const h=()=>{const id=(location.hash||'').slice(1);if(id)showTab(id)};window.addEventListener('hashchange',h);setTimeout(h,0);}
+// ---------- CartPole (exact gym dynamics) ----------
+const CP={g:9.8,mc:1.0,mp:0.1,len:0.5,force:10,tau:0.02,thMax:12*2*Math.PI/360,xMax:2.4};
+CP.tm=CP.mc+CP.mp;CP.pml=CP.mp*CP.len;
+function cpReset(r){return [0,0,0,0].map(()=>(r()*0.1-0.05))}
+function cpStep(s,a){let [x,xd,th,thd]=s;const f=a===1?CP.force:-CP.force;const c=Math.cos(th),sn=Math.sin(th);
+  const tmp=(f+CP.pml*thd*thd*sn)/CP.tm;const tha=(CP.g*sn-c*tmp)/(CP.len*(4/3-CP.mp*c*c/CP.tm));const xa=tmp-CP.pml*tha*c/CP.tm;
+  x+=CP.tau*xd;xd+=CP.tau*xa;th+=CP.tau*thd;thd+=CP.tau*tha;const ns=[x,xd,th,thd];
+  const term=x<-CP.xMax||x>CP.xMax||th<-CP.thMax||th>CP.thMax;return {s:ns,term};}
+// draw cartpole on canvas ctx in box (x0,y0,w,h)
+function drawCart(ctx,s,box,o){o=o||{};const {x0,y0,w,h}=box;const sc=w/(2*CP.xMax*1.2);const gy=y0+h*0.82;const cx=x0+w/2+s[0]*sc;
+  ctx.save();ctx.fillStyle=o.bg||'#fff';ctx.fillRect(x0,y0,w,h);
+  ctx.strokeStyle=C.line;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x0+4,gy);ctx.lineTo(x0+w-4,gy);ctx.stroke();
+  [-CP.xMax,CP.xMax].forEach(lim=>{const lx=x0+w/2+lim*sc;ctx.strokeStyle=C.coral;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(lx,gy-h*0.6);ctx.lineTo(lx,gy+6);ctx.stroke();ctx.setLineDash([]);});
+  const cw=Math.max(26,w*0.11),ch=cw*0.45;ctx.fillStyle=o.dead?C.coral:C.navy;ctx.beginPath();ctx.roundRect?ctx.roundRect(cx-cw/2,gy-ch-6,cw,ch,4):ctx.rect(cx-cw/2,gy-ch-6,cw,ch);ctx.fill();
+  ctx.fillStyle=C.grey;[cx-cw*0.3,cx+cw*0.3].forEach(wx=>{ctx.beginPath();ctx.arc(wx,gy-4,cw*0.08,0,7);ctx.fill();});
+  const L=h*0.55,px=cx,py=gy-ch-6;ctx.strokeStyle=o.pole||C.amber;ctx.lineWidth=Math.max(4,w*0.014);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px+L*Math.sin(s[2]),py-L*Math.cos(s[2]));ctx.stroke();
+  ctx.fillStyle='#fff';ctx.strokeStyle=C.navy;ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py,4,0,7);ctx.fill();ctx.stroke();
+  if(o.arrow!=null){ctx.strokeStyle=C.teal;ctx.fillStyle=C.teal;ctx.lineWidth=3;const d=o.arrow===1?1:-1;const ax=cx+d*(cw/2+6),ay=gy-ch/2-6;ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax+d*22,ay);ctx.stroke();ctx.beginPath();ctx.moveTo(ax+d*30,ay);ctx.lineTo(ax+d*20,ay-6);ctx.lineTo(ax+d*20,ay+6);ctx.fill();}
+  ctx.restore();}
+// simple line chart into an <svg>: series=[{pts:[y...] or [[x,y]], color, width, dash, label}]
+function lineChart(svg,series,o){o=o||{};svg.innerHTML='';const W=o.W||600,H=o.H||300;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const m={l:o.ml||52,r:16,t:16,b:o.mb||38};const all=series.flatMap(s=>s.pts.map((p,i)=>Array.isArray(p)?p:[i,p]));
+  let xmin=o.xmin??Math.min(...all.map(p=>p[0])),xmax=o.xmax??Math.max(...all.map(p=>p[0])),ymin=o.ymin??Math.min(...all.map(p=>p[1])),ymax=o.ymax??Math.max(...all.map(p=>p[1]));
+  if(!isFinite(xmin)){xmin=0;xmax=1;ymin=0;ymax=1}if(xmax===xmin)xmax=xmin+1;if(ymax===ymin)ymax=ymin+1;
+  const X=v=>m.l+(v-xmin)/(xmax-xmin)*(W-m.l-m.r),Y=v=>H-m.b-(v-ymin)/(ymax-ymin)*(H-m.t-m.b);
+  const ticks=o.yticks||[ymin,(ymin+ymax)/2,ymax];ticks.forEach(t=>{S('line',{x1:m.l,x2:W-m.r,y1:Y(t),y2:Y(t),stroke:'#E3E7EA'},svg);T(svg,m.l-6,Y(t),o.yfmt?o.yfmt(t):fmt(t,o.yd??0),{anchor:'end',size:13,color:C.muted});});
+  S('line',{x1:m.l,x2:W-m.r,y1:H-m.b,y2:H-m.b,stroke:C.line},svg);
+  if(o.xlabel)T(svg,(m.l+W-m.r)/2,H-10,o.xlabel,{anchor:'middle',size:13,color:C.muted});
+  if(o.ylabel){const t=T(svg,14,(m.t+H-m.b)/2,o.ylabel,{anchor:'middle',size:13,color:C.muted});t.setAttribute('transform',`rotate(-90 14 ${(m.t+H-m.b)/2})`);}
+  (o.hlines||[]).forEach(h=>{S('line',{x1:m.l,x2:W-m.r,y1:Y(h.y),y2:Y(h.y),stroke:h.color||C.grey,'stroke-dasharray':'5 4','stroke-width':1.5},svg);if(h.label)T(svg,W-m.r-4,Y(h.y)-9,h.label,{anchor:'end',size:12,color:h.color||C.grey,bold:true});});
+  series.forEach(s=>{const pts=s.pts.map((p,i)=>Array.isArray(p)?p:[i,p]).filter(p=>isFinite(p[1]));if(!pts.length)return;
+    S('path',{d:pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(''),fill:'none',stroke:s.color||C.teal,'stroke-width':s.width||2.5,'stroke-dasharray':s.dash||'','stroke-linejoin':'round',opacity:s.opacity??1},svg);
+    if(s.dots)pts.forEach(p=>S('circle',{cx:X(p[0]),cy:Y(p[1]),r:3,fill:s.color||C.teal},svg));
+    if(s.label){const p=pts[pts.length-1];T(svg,Math.min(X(p[0])+4,W-m.r-2),Y(p[1]),s.label,{size:12,color:s.color,bold:true,anchor:X(p[0])>W-90?'end':'start'});}});
+  return {X,Y};}
+function histo(svg,vals,o){o=o||{};svg.innerHTML='';const W=o.W||600,H=o.H||260;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const m={l:40,r:14,t:14,b:36};const lo=o.lo??Math.min(...vals),hi=o.hi??Math.max(...vals);const nb=o.bins||20;const bw=(hi-lo)/nb||1;const cnt=new Array(nb).fill(0);
+  vals.forEach(v=>{let k=Math.floor((v-lo)/bw);k=Math.max(0,Math.min(nb-1,k));cnt[k]++;});const mx=Math.max(1,...cnt);
+  const X=v=>m.l+(v-lo)/(hi-lo||1)*(W-m.l-m.r),Y=c=>H-m.b-c/mx*(H-m.t-m.b);
+  cnt.forEach((c,i)=>S('rect',{x:X(lo+i*bw)+1,y:Y(c),width:Math.max(1,X(lo+bw)-X(lo)-2),height:H-m.b-Y(c),fill:o.color||C.amber,rx:2},svg));
+  S('line',{x1:m.l,x2:W-m.r,y1:H-m.b,y2:H-m.b,stroke:C.line},svg);
+  T(svg,m.l,H-14,fmt(lo,o.d??0),{size:13,color:C.muted});T(svg,W-m.r,H-14,fmt(hi,o.d??0),{size:13,color:C.muted,anchor:'end'});
+  if(o.xlabel)T(svg,(W)/2,H-14,o.xlabel,{size:13,color:C.muted,anchor:'middle'});
+  (o.marks||[]).forEach(mk=>{S('line',{x1:X(mk.v),x2:X(mk.v),y1:m.t,y2:H-m.b,stroke:mk.color,'stroke-width':3},svg);const nr=X(mk.v)>W-140;T(svg,X(mk.v)+(nr?-6:5),m.t+10+(mk.dy||0),mk.label,{size:13,color:mk.color,bold:true,anchor:nr?'end':'start'});});
+  return {X};}
+
+initTabs();
+
+// ===== mdp_lab.src.html =====
+(()=>{
+
+
+// world
+const W=5,H=4,START=[0,3],GOAL=[4,0],LAVA=[[3,1],[3,2]],WALL=[[1,1]],MAXT=25;
+const DIRS=[[0,-1],[1,0],[0,1],[-1,0]],AN=['↑','→','↓','←'],ANAME=['up','right','down','left'];
+const isIn=(a,p)=>a.some(q=>q[0]===p[0]&&q[1]===p[1]);
+function stepW(p,a,slip,r){let d=a,sl=false;const u=r();if(u<slip){sl=true;d=(u<slip/2)?(a+1)%4:(a+3)%4;}
+ let n=[p[0]+DIRS[d][0],p[1]+DIRS[d][1]];if(n[0]<0||n[0]>=W||n[1]<0||n[1]>=H||isIn(WALL,n))n=p.slice();
+ let rew=-1,term=false;if(n[0]===GOAL[0]&&n[1]===GOAL[1]){rew=10;term=true}else if(isIn(LAVA,n)){rew=-10;term=true}
+ return {n,rew,term,sl,d};}
+function drawGrid(ctx,cw,ch,o){o=o||{};const cs=Math.min(cw/W,ch/H);ctx.clearRect(0,0,cw,ch);ctx.font='bold '+(cs*0.22)+'px Calibri,Carlito,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ for(let x=0;x<W;x++)for(let y=0;y<H;y++){let f='#F2F4F5',t='';if(isIn(WALL,[x,y])){f='#4F5A63'}else if(isIn(LAVA,[x,y])){f=C.coral;t='−10'}else if(x===GOAL[0]&&y===GOAL[1]){f=C.teal;t='+10'}else if(x===START[0]&&y===START[1])t='start';
+  if(o.heat&&!isIn(WALL,[x,y])&&!t.match(/10/)){f=mix('#FFFFFF',C.purple,Math.min(1,o.heat[y][x]))}
+  ctx.fillStyle=f;ctx.fillRect(x*cs+3,y*cs+3,cs-6,cs-6);ctx.fillStyle=(f===C.coral||f===C.teal)?'#fff':C.muted;ctx.fillText(t,x*cs+cs/2,y*cs+cs/2);}
+ return cs;}
+// ---------- play ----------
+const g1=$('#g1'),x1=g1.getContext('2d');let pos=START.slice(),log=[],over=false,rr=rng(3);
+const gam=()=>+$('#p_gam').value,slip=()=>+$('#p_slip').value;
+function returns(rs,g){const G=new Array(rs.length);let acc=0;for(let i=rs.length-1;i>=0;i--){acc=rs[i]+g*acc;G[i]=acc}return G}
+function renderPlay(){const cs=drawGrid(x1,750,600);
+ x1.strokeStyle=C.purple;x1.lineWidth=5;x1.beginPath();let pts=[START].concat(log.map(l=>l.n));pts.forEach((p,i)=>{const X=p[0]*cs+cs/2,Y=p[1]*cs+cs/2;i?x1.lineTo(X,Y):x1.moveTo(X,Y)});x1.stroke();
+ x1.fillStyle=C.navy;x1.beginPath();x1.arc(pos[0]*cs+cs/2,pos[1]*cs+cs/2,cs*0.2,0,7);x1.fill();
+ const G=returns(log.map(l=>l.rew),gam());
+ $('#tape').innerHTML='<table class="t"><tr><th>t</th><th>s<sub>t</sub></th><th>chose</th><th>went</th><th>r<sub>t</sub></th><th>G<sub>t</sub></th></tr>'+log.map((l,i)=>`<tr class="${l.sl?'slip':''} ${l.term||l.trunc?'end':''}"><td>${i}</td><td>(${l.p[0]},${l.p[1]})</td><td>${AN[l.a]}</td><td>${AN[l.d]}${l.sl?' slip!':''}</td><td><b>${l.rew>0?'+':''}${l.rew}</b></td><td><b style="color:var(--teal)">${fmt(G[i],2)}</b></td></tr>`).join('')+'</table>';
+ $('#p_G0').textContent=log.length?fmt(G[0],2):'0';$('#p_stat').textContent=over?(log[log.length-1].trunc?'truncated':'terminated'):'playing';
+ $('#p_slipv').textContent=slip().toFixed(2);$('#p_gamv').textContent=gam().toFixed(2);}
+function move(a){if(over)return;const o=stepW(pos,a,slip(),rr);const l={p:pos.slice(),a,d:o.d,sl:o.sl,rew:o.rew,n:o.n,term:o.term,trunc:false};pos=o.n;log.push(l);if(o.term)over=true;else if(log.length>=MAXT){over=true;l.trunc=true}renderPlay();}
+$$('[data-a]').forEach(b=>b.onclick=()=>move(+b.dataset.a));
+$('#p_reset').onclick=()=>{pos=START.slice();log=[];over=false;renderPlay()};
+$('#p_replay').onclick=()=>{const acts=log.map(l=>l.a);pos=START.slice();log=[];over=false;acts.forEach(a=>move(a));};
+['#p_slip','#p_gam'].forEach(q=>$(q).oninput=renderPlay);
+document.addEventListener('keydown',e=>{if(!$('#play').classList.contains('on'))return;const m={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3}[e.key];if(m!=null){e.preventDefault();move(m)}});
+renderPlay();
+// ---------- many ----------
+function polProbs(tu,tr){return softmax([tu,tr,0,0])}
+function playGame(pr,r,visits,g){let p=START.slice(),rs=[];for(let t=0;t<MAXT;t++){const u=r();let a=0,c=pr[0];while(u>c&&a<3){a++;c+=pr[a]}const o=stepW(p,a,0.2,r);rs.push(o.rew);p=o.n;if(visits)visits[p[1]][p[0]]++;if(o.term)break;}let G=0;for(let i=rs.length-1;i>=0;i--)G=rs[i]+(g??1)*G;return G;}
+let mR=[],mr=rng(11);
+function knobs(){const tu=+$('#m_tu').value,tr=+$('#m_tr').value;$('#m_tuv').textContent=tu.toFixed(1);$('#m_trv').textContent=tr.toFixed(1);const p=polProbs(tu,tr);$('#m_probs').innerHTML=p.map((v,i)=>`<div><i style="height:${v*80}px"></i>${AN[i]} ${(v*100).toFixed(0)}%</div>`).join('');return p}
+let visits=[...Array(H)].map(()=>new Array(W).fill(0));
+function renderMany(){if(!mR.length){histo($('#m_hist'),[],{lo:-30,hi:10,W:760,H:260,xlabel:'return of one game (undiscounted)'});lineChart($('#m_run'),[{pts:[]}],{W:760,H:220});}else{
+ const m=mean(mR);histo($('#m_hist'),mR,{lo:-30,hi:10,bins:30,W:760,H:260,marks:[{v:m,color:C.teal,label:'mean '+fmt(m,2)}],xlabel:'return of one game (undiscounted)'});
+ let acc=0;const run=mR.map((v,i)=>(acc+=v)/(i+1));lineChart($('#m_run'),[{pts:run,color:C.teal,width:3,label:'running mean'}],{W:760,H:220,ymin:-30,ymax:10,yticks:[-30,-20,-10,0,10],xlabel:'number of games N',ylabel:'estimate of J'});}
+ $('#m_J').textContent=mR.length?fmt(mean(mR),2):'—';$('#m_sd').textContent=mR.length>1?fmt(std(mR),1):'—';$('#m_n').textContent=mR.length;
+ const mx=Math.max(1,...visits.flat());const hm=visits.map(r=>r.map(v=>v/mx));drawGrid($('#m_heat').getContext('2d'),500,400,{heat:hm});}
+function addGames(n){const p=knobs();for(let i=0;i<n;i++)mR.push(playGame(p,mr,visits));renderMany();}
+$('#m_go').onclick=()=>{let k=0;const t=setInterval(()=>{addGames(10);if((k+=10)>=200)clearInterval(t)},40)};$('#m_one').onclick=()=>addGames(1);
+['#m_tu','#m_tr'].forEach(q=>$(q).oninput=()=>{mR=[];visits=[...Array(H)].map(()=>new Array(W).fill(0));knobs();renderMany();});
+knobs();renderMany();
+// ---------- landscape ----------
+const lc=$('#l_cv'),lx=lc.getContext('2d');const NG=21,LO=-2,HI=4;let land=null,here=[1,1],lr=rng(99);
+const PX={x0:70,y0:20,w:640,h:580};
+function toXY(tr,tu){return [PX.x0+(tr-LO)/(HI-LO)*PX.w,PX.y0+(HI-tu)/(HI-LO)*PX.h]}
+function colorJ(j){const t=Math.max(0,Math.min(1,(j+25)/15));return t<0.5?mix(C.coral,'#F7F7F7',t*2):mix('#F7F7F7',C.teal,(t-0.5)*2)}
+function renderLand(){lx.clearRect(0,0,760,660);const cw=PX.w/NG,ch=PX.h/NG;
+ if(land){for(let i=0;i<NG;i++)for(let j=0;j<NG;j++){if(land[i][j]==null)continue;lx.fillStyle=colorJ(land[i][j]);lx.fillRect(PX.x0+j*cw,PX.y0+(NG-1-i)*ch,cw+0.5,ch+0.5);}}else{lx.fillStyle='#F2F4F5';lx.fillRect(PX.x0,PX.y0,PX.w,PX.h);lx.fillStyle=C.muted;lx.font='22px Calibri,Carlito,sans-serif';lx.textAlign='center';lx.fillText('press "estimate the whole landscape"',PX.x0+PX.w/2,PX.y0+PX.h/2);}
+ lx.fillStyle=C.muted;lx.font='16px Calibri,Carlito,sans-serif';lx.textAlign='center';for(let v=LO;v<=HI;v++){const [X]=toXY(v,0);lx.fillText(v,X,PX.y0+PX.h+18);const [,Y]=toXY(0,v);lx.textAlign='right';lx.fillText(v,PX.x0-8,Y+5);lx.textAlign='center';}
+ lx.fillText('θ_right →',PX.x0+PX.w/2,PX.y0+PX.h+38);lx.save();lx.translate(22,PX.y0+PX.h/2);lx.rotate(-Math.PI/2);lx.fillText('θ_up →',0,0);lx.restore();
+ const [X,Y]=toXY(here[1],here[0]);lx.strokeStyle=C.navy;lx.lineWidth=3;lx.beginPath();lx.arc(X,Y,12,0,7);lx.stroke();lx.fillStyle='#fff';lx.beginPath();lx.arc(X,Y,5,0,7);lx.fill();}
+$('#l_compute').onclick=()=>{land=[...Array(NG)].map(()=>new Array(NG).fill(null));let i=0;const r=rng(5);const t=setInterval(()=>{for(let j=0;j<NG;j++){const tu=LO+(HI-LO)*i/(NG-1),tr=LO+(HI-LO)*j/(NG-1);const p=polProbs(tu,tr);let s=0;for(let k=0;k<60;k++)s+=playGame(p,r);land[i][j]=s/60;}
+ $('#l_prog').textContent=`${Math.round((i+1)/NG*100)}% · ${(i+1)*NG*60} games so far`;renderLand();if(++i>=NG)clearInterval(t);},30);};
+function sampleHere(){const p=polProbs(here[0],here[1]);const v=[];for(let k=0;k<20;k++)v.push(playGame(p,lr));$('#l_here').textContent=fmt(mean(v),2);$('#l_se').textContent=fmt(std(v)/Math.sqrt(20),2);}
+lc.onclick=e=>{const b=lc.getBoundingClientRect();const x=(e.clientX-b.left)*760/b.width,y=(e.clientY-b.top)*660/b.height;const tr=LO+(x-PX.x0)/PX.w*(HI-LO),tu=HI-(y-PX.y0)/PX.h*(HI-LO);if(tr<LO||tr>HI||tu<LO||tu>HI)return;here=[tu,tr];sampleHere();renderLand();};
+$('#l_again').onclick=sampleHere;renderLand();sampleHere();
+// ---------- dice: T(s'|s,a) ----------
+(()=>{const cv=$('#dc_cv'),cx=cv.getContext('2d');let at=[0,2],act=1,counts={},rr=rng(42);
+ function landing(p,d){let n=[p[0]+DIRS[d][0],p[1]+DIRS[d][1]];if(n[0]<0||n[0]>=W||n[1]<0||n[1]>=H||isIn(WALL,n))n=p.slice();return n}
+ function Trow(p,a,sl){const out={};const add=(n,pr,how)=>{const k=n.join(',');if(!out[k])out[k]={n,pr:0,how:[]};out[k].pr+=pr;if(pr>0)out[k].how.push(how)};
+  add(landing(p,a),1-sl,'intended');add(landing(p,(a+1)%4),sl/2,'slip');add(landing(p,(a+3)%4),sl/2,'slip');return Object.values(out).filter(o=>o.pr>0).sort((x,y)=>y.pr-x.pr)}
+ const sl=()=>+$('#dc_slip').value;
+ function draw(){const cs=drawGrid(cx,750,600);const row=Trow(at,act,sl());const P=[at[0]*cs+cs/2,at[1]*cs+cs/2];
+  cx.fillStyle=C.navy;cx.beginPath();cx.arc(P[0],P[1],cs*0.18,0,7);cx.fill();
+  row.forEach(o=>{const Q=[o.n[0]*cs+cs/2,o.n[1]*cs+cs/2];const same=o.n[0]===at[0]&&o.n[1]===at[1];cx.strokeStyle=o.how.includes('intended')?C.teal:C.coral;cx.fillStyle=cx.strokeStyle;cx.lineWidth=4+o.pr*10;
+   if(!same){const ang=Math.atan2(Q[1]-P[1],Q[0]-P[0]);const s0=[P[0]+Math.cos(ang)*cs*0.22,P[1]+Math.sin(ang)*cs*0.22],e0=[Q[0]-Math.cos(ang)*cs*0.18,Q[1]-Math.sin(ang)*cs*0.18];cx.beginPath();cx.moveTo(...s0);cx.lineTo(...e0);cx.stroke();cx.beginPath();cx.moveTo(e0[0]+Math.cos(ang)*14,e0[1]+Math.sin(ang)*14);cx.lineTo(e0[0]-Math.sin(ang)*10,e0[1]+Math.cos(ang)*10);cx.lineTo(e0[0]+Math.sin(ang)*10,e0[1]-Math.cos(ang)*10);cx.fill();}
+   else{cx.beginPath();cx.arc(P[0],P[1]-cs*0.3,cs*0.12,0.2*Math.PI,2.6*Math.PI);cx.stroke();}
+   cx.font='bold 24px Calibri,Carlito,sans-serif';cx.textAlign='center';cx.fillStyle=C.ink;const vert=o.n[0]===at[0];cx.fillText(o.pr.toFixed(2),same?P[0]:Q[0]+(vert?cs*0.3:0),same?P[1]-cs*0.48:Q[1]+(vert?0:cs*0.38));});
+  const tot=Object.values(counts).reduce((a,b)=>a+b,0);
+  $('#dc_tab').innerHTML='<tr><th>land on s′</th><th>how</th><th>T(s′|s,a)</th><th>rolled</th></tr>'+row.map(o=>{const k=o.n.join(',');const c=counts[k]||0;const same=o.n[0]===at[0]&&o.n[1]===at[1];return `<tr><td style="background:var(--bg)">(${o.n[0]}, ${o.n[1]})${same?' stay':''}</td><td style="background:var(--bg)">${o.how.join(' + ')}</td><td style="background:var(--teal-lt)"><b>${o.pr.toFixed(2)}</b></td><td style="background:var(--bg)">${tot?(c/tot).toFixed(2)+' ('+c+')':'—'}</td></tr>`}).join('')+`<tr><td></td><td><b>total</b></td><td><b>${row.reduce((a,o)=>a+o.pr,0).toFixed(2)}</b></td><td>${tot} rolls</td></tr>`;
+  $('#dc_slipv').textContent=sl().toFixed(2);}
+ function roll(n){const row=Trow(at,act,sl());for(let i=0;i<n;i++){const u=rr();let acc=0;for(const o of row){acc+=o.pr;if(u<=acc+1e-12){const k=o.n.join(',');counts[k]=(counts[k]||0)+1;break}}}draw();}
+ $$('[data-da]').forEach(b=>b.onclick=()=>{act=+b.dataset.da;counts={};draw()});
+ $('#dc_slip').oninput=()=>{counts={};draw()};$('#dc_r1').onclick=()=>roll(1);$('#dc_r100').onclick=()=>roll(100);$('#dc_clear').onclick=()=>{counts={};draw()};
+ cv.onclick=e=>{const b=cv.getBoundingClientRect();const cs=Math.min(750/W,600/H);const x=Math.floor((e.clientX-b.left)*750/b.width/cs),y=Math.floor((e.clientY-b.top)*600/b.height/cs);if(x<0||x>=W||y<0||y>=H||isIn(WALL,[x,y])||isIn(LAVA,[x,y])||(x===GOAL[0]&&y===GOAL[1]))return;at=[x,y];counts={};draw();};
+ draw();})();
+
+})();
+</script><!--presenter-->
+<style>
+.placard.pc>h3{cursor:pointer}
+.placard.pc>h3::after{content:" ▸";font-weight:400;opacity:.45}
+.placard.pc.open>h3::after{content:" ▾"}
+.placard.pc:not(.open)>*:not(h3){display:none}
+.placard.pc:not(.open){padding-bottom:10px}
+.placard.pc:not(.open)>h3{margin:0}
+#pnote{position:fixed;right:14px;bottom:12px;font:12px system-ui,sans-serif;color:#8a90a0;background:#fff;border:1px solid #e3e5ea;border-radius:8px;padding:4px 9px;cursor:pointer;z-index:99}
+</style>
+<script>
+(function(){
+  function setup(){
+    document.querySelectorAll('.placard').forEach(function(p){
+      if(p.classList.contains('pc')||p.id||p.querySelector('[id]')) return;
+      if(p.querySelector('table,canvas,svg,input,select,button,textarea,pre')) return;
+      var h=p.querySelector(':scope>h3'); if(!h) return;
+      var kids=[].slice.call(p.children).filter(function(c){return c!==h});
+      if(!kids.length) return;
+      p.classList.add('pc');
+      h.addEventListener('click',function(){p.classList.toggle('open')});
+    });
+  }
+  var all=false;
+  function toggleAll(){all=!all;document.querySelectorAll('.placard.pc').forEach(function(p){p.classList.toggle('open',all)});}
+  document.addEventListener('keydown',function(e){if((e.key==='n'||e.key==='N')&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){toggleAll();}});
+  window.addEventListener('load',function(){
+    setup();
+    var b=document.createElement('div');b.id='pnote';b.textContent='notes: click a heading · N = all';b.onclick=toggleAll;document.body.appendChild(b);
+    new MutationObserver(setup).observe(document.body,{childList:true,subtree:true});
+  });
+})();
+</script>
+</body></html>

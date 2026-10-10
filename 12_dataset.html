@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dataset building — TARA RL</title>
+<style>:root{--teal:#0E7C7B;--teal-lt:#DCEEED;--coral:#E4572E;--coral-lt:#FBE4DC;--purple:#6C4AB6;--purple-lt:#EAE3F7;--amber:#B7791F;--amber-lt:#FDF1D6;--blue:#2F6DB5;--blue-lt:#DDE8F6;--ink:#1A1A1A;--muted:#4F5A63;--line:#C9D0D5;--bg:#F2F4F5;--code:#1E1E2E;--grey:#8A949C;--page:#FFFFFF}
+*{box-sizing:border-box}
+html{font-size:20px}
+@media (min-width:1700px){html{font-size:23px}}
+@media (max-width:900px){html{font-size:16px}}
+body{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif;margin:0;background:var(--page);color:var(--ink);line-height:1.35}
+.wrap{max-width:1800px;margin:0 auto;padding:20px 30px 40px}
+.kicker{font-size:.78rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
+h1{font-size:1.9rem;margin:.1em 0 .15em}
+.sub{color:var(--muted);font-size:1.02rem;margin:0 0 .6rem;max-width:80ch}
+.tabs{display:flex;flex-wrap:wrap;gap:10px;margin:.5rem 0 1rem;align-items:center}
+.tabs button{font:inherit;font-size:.95rem;font-weight:700;padding:.45rem .9rem;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.tabs button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+section.tab{display:none}
+section.tab.on{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:24px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.stage{border:2px solid var(--line);border-radius:18px;padding:12px;background:#fff;position:relative}
+.stage canvas,.stage svg{width:100%;height:auto;display:block}
+.side{display:flex;flex-direction:column;gap:14px}
+.placard{border-radius:16px;padding:14px 18px;background:var(--bg);font-size:1.02rem}
+.placard h3{margin:0 0 .3rem;font-size:1.15rem}
+.placard p{margin:.25rem 0}
+.placard.teal{background:var(--teal-lt)}.placard.teal h3{color:var(--teal)}
+.placard.coral{background:var(--coral-lt)}.placard.coral h3{color:var(--coral)}
+.placard.purple{background:var(--purple-lt)}.placard.purple h3{color:var(--purple)}
+.placard.amber{background:var(--amber-lt)}.placard.amber h3{color:var(--amber)}
+.placard.dark{background:var(--code);color:#E4E4EF}.placard.dark h3{color:#fff}
+.ctl{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;font-size:.98rem;margin:10px 0}
+.ctl label{font-weight:700;color:var(--muted)}
+.ctl input[type=range]{width:180px;accent-color:var(--teal)}
+.ctl select{font:inherit;padding:.25rem .4rem;border-radius:8px;border:2px solid var(--line)}
+button.b{font:inherit;font-size:.98rem;font-weight:700;padding:.45rem .95rem;border-radius:12px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+button.b.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+button.b.coral{background:var(--coral);border-color:var(--coral);color:#fff}
+button.b:disabled{opacity:.4;cursor:default}
+.mono,code{font-family:"Courier New","DejaVu Sans Mono",monospace}
+code{background:var(--bg);padding:0 .25em;border-radius:5px}
+.placard.dark code{background:#2C2C40}
+.stat{display:flex;gap:10px;flex-wrap:wrap}
+.stat div{flex:1;min-width:110px;border-radius:14px;padding:8px 12px;background:var(--bg)}
+.stat b{display:block;font-size:1.55rem;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.85rem}
+.note{color:var(--grey);font-size:.85rem;font-style:italic}
+table.t{border-collapse:separate;border-spacing:3px;font-size:.92rem;font-variant-numeric:tabular-nums}
+table.t td,table.t th{padding:4px 8px;border-radius:7px;text-align:center}
+table.t th{color:var(--muted);font-weight:700}
+.chk{display:inline-flex;gap:6px;align-items:center;font-weight:700;color:var(--muted);cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--teal)}
+.keys{position:fixed;right:14px;bottom:10px;font-size:.75rem;color:var(--grey);background:#fff;padding:4px 10px;border-radius:10px;border:1px solid var(--line)}
+svg text{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.9rem;color:var(--muted);margin:6px 2px}
+.legend i{display:inline-block;width:16px;height:16px;border-radius:4px;vertical-align:-3px;margin-right:5px}
+canvas.hm{cursor:crosshair}
+
+.tabs.grouped{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:flex-start}
+.tabs.grouped .grp{display:flex;flex-direction:column;gap:5px}
+.tabs.grouped .grp>span{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tabs.grouped .grp>div{display:flex;gap:6px;flex-wrap:wrap}
+.tabs.grouped button{font-size:.9rem;padding:.4rem .75rem}
+.tabs.grouped button .n{display:inline-block;min-width:1.3em;margin-right:.35em;color:var(--teal);font-variant-numeric:tabular-nums}
+.tabs.grouped button.on .n{color:#fff}
+</style></head><body>
+<div class="wrap">
+<div class="kicker">TARA · RL week 1 · interactive 12</div>
+<h1>How the dataset gets built</h1>
+<p class="sub">In RL the policy makes its own data. Play a rollout, update the policy, play again — and watch what each method keeps. Colours are policy versions: every update makes a new one.</p>
+
+<div class="ctl">
+  <label>method</label>
+  <div class="seg" id="mode">
+    <button class="b primary" data-m="vpg">VPG · on-policy</button>
+    <button class="b" data-m="dqn">DQN · off-policy</button>
+  </div>
+</div>
+<div class="ctl">
+  <button class="b primary" id="play">1 · ▶ play a rollout</button>
+  <button class="b" id="upd">2 · update the policy</button>
+  <button class="b" id="auto">auto: 5 × (play + update)</button>
+  <button class="b" id="reset">reset</button>
+</div>
+
+<div class="grid">
+  <div class="stage"><svg id="svg" viewBox="0 0 900 560"></svg></div>
+  <div class="side">
+    <div class="placard teal" id="explain"></div>
+    <div class="placard">
+      <h3>Counters</h3>
+      <table class="stats">
+        <tr><td>transitions played</td><td id="c_played">0</td></tr>
+        <tr><td>gradient updates</td><td id="c_upd">0</td></tr>
+        <tr><td>times each transition is used (avg)</td><td id="c_reuse">–</td></tr>
+        <tr><td>last minibatch from the current policy</td><td id="c_fresh">–</td></tr>
+      </table>
+    </div>
+    <div class="placard amber">
+      <h3>Why VPG throws data away</h3>
+      <p>The policy gradient is an average over games <b>played by the current policy</b>. After an update, the old games describe an old policy, so VPG plays again. DQN's Q-learning target doesn't care who acted, so it can keep a memory.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<style>
+.seg{display:flex;gap:8px}
+table.stats{width:100%;border-collapse:collapse;font-size:1rem}
+table.stats td{padding:4px 2px;border-bottom:1px solid var(--line)}
+table.stats td:last-child{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+</style>
+
+<script>
+(function(){
+const VER=['#8A949C','#6C4AB6','#2F6DB5','#0E7C7B','#B7791F','#E4572E','#3B8F4E','#A33D7A'];
+const E=4,T=12,CAP=4*E*T; // replay capacity = 4 rollouts
+let mode='vpg',ver=0,rollout=null,buffer=[],played=0,updates=0,uses=0,usedCount=0,lastBatch=null,anim=null,discarded=0,phase='play';
+const svg=document.getElementById('svg');const NS='http://www.w3.org/2000/svg';
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e;}
+function txt(x,y,s,a){const e=el('text',Object.assign({x,y,'font-size':18,fill:'#1A1A1A','font-family':'Calibri,Carlito,Arial'},a||{}));e.textContent=s;return e;}
+let rng=12345;function rand(){rng=(rng*1664525+1013904223)>>>0;return rng/4294967296;}
+function newRollout(){const cells=[];for(let e=0;e<E;e++){const row=[];for(let t=0;t<T;t++){const done=rand()<0.14||false;row.push({v:ver,a:rand()<0.5?'L':'R',done,id:Math.random()});}cells.push(row);}return cells;}
+function draw(k){ // k = number of columns revealed
+  svg.innerHTML='';
+  // header
+  txt(20,32,'current policy',{'font-size':17,fill:'#4F5A63','font-weight':700});
+  el('rect',{x:150,y:12,width:70,height:30,rx:8,fill:VER[ver%VER.length]});
+  txt(185,33,'v'+(ver+1),{'text-anchor':'middle',fill:'#fff','font-weight':700});
+  txt(240,33,phase==='play'?'→ press “play a rollout”':'→ press “update the policy”',{'font-size':17,fill:'#4F5A63'});
+  // rollout grid
+  txt(20,78,'Rollout being played: '+E+' envs × '+T+' steps',{'font-weight':700});
+  const gx=120,gy=92,cs=52;
+  for(let e=0;e<E;e++){txt(20,gy+e*cs+32,'env '+e,{'font-size':16,fill:'#4F5A63'});
+    for(let t=0;t<T;t++){const c=rollout&&t<k?rollout[e][t]:null;
+      el('rect',{x:gx+t*cs,y:gy+e*cs,width:cs-6,height:cs-6,rx:6,fill:c?VER[c.v%VER.length]:'#F2F4F5',stroke:'#C9D0D5'});
+      if(c){txt(gx+t*cs+(cs-6)/2,gy+e*cs+30,c.a,{'text-anchor':'middle',fill:'#fff','font-size':16,'font-weight':700});
+        if(c.done)el('rect',{x:gx+t*cs+cs-10,y:gy+e*cs-2,width:5,height:cs-2,fill:'#E4572E'});}
+    }}
+  txt(gx,gy+E*cs+14,'each cell = one (state, action, reward, done) · red bar = episode ended, env resets',{'font-size':15,fill:'#4F5A63'});
+  // storage
+  const sy=gy+E*cs+50;
+  if(mode==='vpg'){
+    txt(20,sy,'What VPG trains on: this rollout only',{'font-weight':700});
+    el('rect',{x:20,y:sy+14,width:860,height:120,rx:12,fill:'#DCEEED'});
+    const n=rollout&&k>=T?E*T:0;
+    for(let i=0;i<E*T;i++){const c=i<n?rollout[Math.floor(i/T)][i%T]:null;el('rect',{x:34+i*17.5,y:sy+40,width:14,height:40,rx:3,fill:c?VER[c.v%VER.length]:'#fff',stroke:'#C9D0D5'});}
+    txt(34,sy+112,n?'48 transitions, all from v'+(ver+1)+' → one gradient step → thrown away':'empty: play a rollout first',{'font-size':16,fill:'#0E7C7B','font-weight':700});
+    txt(20,sy+170,'discarded after updates: '+discarded+' transitions',{'font-size':16,fill:'#4F5A63'});
+  } else {
+    txt(20,sy,'DQN replay buffer (keeps the last '+CAP+' transitions)',{'font-weight':700});
+    el('rect',{x:20,y:sy+14,width:860,height:140,rx:12,fill:'#EAE3F7'});
+    const per=48,cw=17.5;
+    for(let i=0;i<CAP;i++){const r=Math.floor(i/per),c=i%per;const b=buffer[i];
+      const inB=lastBatch&&b&&lastBatch.has(b.id);
+      el('rect',{x:34+c*cw,y:sy+26+r*30,width:14,height:24,rx:3,fill:b?VER[b.v%VER.length]:'#fff',stroke:inB?'#1A1A1A':'#C9D0D5','stroke-width':inB?3:1});}
+    txt(34,sy+180,lastBatch?'black outline = the random minibatch for the last update (mixes old and new versions)':'fills up as you play; old transitions are reused many times',{'font-size':16,fill:'#6C4AB6','font-weight':700});
+  }
+}
+function explain(){const ex=document.getElementById('explain');
+  ex.innerHTML=mode==='vpg'
+   ?'<h3>VPG · on-policy</h3><p><b>1.</b> Play: 4 envs × 12 steps with the current policy.</p><p><b>2.</b> Update once using exactly those 48 transitions.</p><p><b>3.</b> Throw them away; the next rollout uses the new policy (a new colour).</p><p>The training data always has one colour.</p>'
+   :'<h3>DQN · off-policy</h3><p><b>1.</b> Play, and append every transition to the replay buffer.</p><p><b>2.</b> Update with 4 <b>random minibatches</b> (32 each) from the whole buffer — old and new colours mixed.</p><p><b>3.</b> When the buffer is full, the oldest transitions drop out.</p><p>Each transition gets reused many times.</p>';}
+function stats(){document.getElementById('c_played').textContent=played;document.getElementById('c_upd').textContent=updates;
+  document.getElementById('c_reuse').textContent=played?(usedCount/played).toFixed(1):'–';
+  document.getElementById('c_fresh').textContent=lastFresh==null?'–':Math.round(lastFresh*100)+'%';}
+let lastFresh=null;
+function play(cb){if(anim||phase!=='play')return;rollout=newRollout();let k=0;
+  anim=setInterval(()=>{k++;draw(k);if(k>=T){clearInterval(anim);anim=null;played+=E*T;
+    if(mode==='dqn'){for(const row of rollout)for(const c of row)buffer.push(c);while(buffer.length>CAP)buffer.shift();}
+    phase='update';draw(T);stats();cb&&cb();}},90);}
+function update(){if(anim||phase!=='update')return;updates++;
+  if(mode==='vpg'){usedCount+=E*T;discarded+=E*T;lastFresh=1;lastBatch=null;}
+  else{updates+=3;let ids,fresh;for(let m=0;m<4;m++){ids=new Set();const B=Math.min(32,buffer.length);fresh=0;while(ids.size<B){const b=buffer[Math.floor(rand()*buffer.length)];if(!ids.has(b.id)){ids.add(b.id);if(b.v===ver)fresh++;}}usedCount+=B;}
+    lastBatch=ids;lastFresh=fresh/ids.size;}
+  ver++;phase='play';if(mode==='vpg')rollout=null;draw(mode==='vpg'?0:T);stats();}
+function auto(n){if(n<=0||anim)return;if(phase==='update')update();play(()=>{setTimeout(()=>{update();setTimeout(()=>auto(n-1),250)},250)});}
+function reset(){if(anim){clearInterval(anim);anim=null;}ver=0;rollout=null;buffer=[];played=0;updates=0;usedCount=0;lastBatch=null;discarded=0;lastFresh=null;phase='play';rng=12345;draw(0);stats();explain();}
+document.getElementById('play').onclick=()=>play();
+document.getElementById('upd').onclick=update;
+document.getElementById('auto').onclick=()=>auto(5);
+document.getElementById('reset').onclick=reset;
+document.querySelectorAll('#mode button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('#mode button').forEach(x=>x.classList.toggle('primary',x===b));reset();});
+reset();
+})();
+</script>
+
+<!--presenter-->
+<style>
+.placard.pc>h3{cursor:pointer}
+.placard.pc>h3::after{content:" ▸";font-weight:400;opacity:.45}
+.placard.pc.open>h3::after{content:" ▾"}
+.placard.pc:not(.open)>*:not(h3){display:none}
+.placard.pc:not(.open){padding-bottom:10px}
+.placard.pc:not(.open)>h3{margin:0}
+#pnote{position:fixed;right:14px;bottom:12px;font:12px system-ui,sans-serif;color:#8a90a0;background:#fff;border:1px solid #e3e5ea;border-radius:8px;padding:4px 9px;cursor:pointer;z-index:99}
+</style>
+<script>
+(function(){
+  function setup(){
+    document.querySelectorAll('.placard').forEach(function(p){
+      if(p.classList.contains('pc')||p.id||p.querySelector('[id]')) return;
+      if(p.querySelector('table,canvas,svg,input,select,button,textarea,pre')) return;
+      var h=p.querySelector(':scope>h3'); if(!h) return;
+      var kids=[].slice.call(p.children).filter(function(c){return c!==h});
+      if(!kids.length) return;
+      p.classList.add('pc');
+      h.addEventListener('click',function(){p.classList.toggle('open')});
+    });
+  }
+  var all=false;
+  function toggleAll(){all=!all;document.querySelectorAll('.placard.pc').forEach(function(p){p.classList.toggle('open',all)});}
+  document.addEventListener('keydown',function(e){if((e.key==='n'||e.key==='N')&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){toggleAll();}});
+  window.addEventListener('load',function(){
+    setup();
+    var b=document.createElement('div');b.id='pnote';b.textContent='notes: click a heading · N = all';b.onclick=toggleAll;document.body.appendChild(b);
+    new MutationObserver(setup).observe(document.body,{childList:true,subtree:true});
+  });
+})();
+</script>
+</body></html>

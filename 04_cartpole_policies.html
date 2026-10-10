@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CartPole Policies — TARA RL</title>
+<style>:root{--teal:#0E7C7B;--teal-lt:#DCEEED;--coral:#E4572E;--coral-lt:#FBE4DC;--purple:#6C4AB6;--purple-lt:#EAE3F7;--amber:#B7791F;--amber-lt:#FDF1D6;--blue:#2F6DB5;--blue-lt:#DDE8F6;--ink:#1A1A1A;--muted:#4F5A63;--line:#C9D0D5;--bg:#F2F4F5;--code:#1E1E2E;--grey:#8A949C;--page:#FFFFFF}
+*{box-sizing:border-box}
+html{font-size:20px}
+@media (min-width:1700px){html{font-size:23px}}
+@media (max-width:900px){html{font-size:16px}}
+body{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif;margin:0;background:var(--page);color:var(--ink);line-height:1.35}
+.wrap{max-width:1800px;margin:0 auto;padding:20px 30px 40px}
+.kicker{font-size:.78rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
+h1{font-size:1.9rem;margin:.1em 0 .15em}
+.sub{color:var(--muted);font-size:1.02rem;margin:0 0 .6rem;max-width:80ch}
+.tabs{display:flex;flex-wrap:wrap;gap:10px;margin:.5rem 0 1rem;align-items:center}
+.tabs button{font:inherit;font-size:.95rem;font-weight:700;padding:.45rem .9rem;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.tabs button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+section.tab{display:none}
+section.tab.on{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:24px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.stage{border:2px solid var(--line);border-radius:18px;padding:12px;background:#fff;position:relative}
+.stage canvas,.stage svg{width:100%;height:auto;display:block}
+.side{display:flex;flex-direction:column;gap:14px}
+.placard{border-radius:16px;padding:14px 18px;background:var(--bg);font-size:1.02rem}
+.placard h3{margin:0 0 .3rem;font-size:1.15rem}
+.placard p{margin:.25rem 0}
+.placard.teal{background:var(--teal-lt)}.placard.teal h3{color:var(--teal)}
+.placard.coral{background:var(--coral-lt)}.placard.coral h3{color:var(--coral)}
+.placard.purple{background:var(--purple-lt)}.placard.purple h3{color:var(--purple)}
+.placard.amber{background:var(--amber-lt)}.placard.amber h3{color:var(--amber)}
+.placard.dark{background:var(--code);color:#E4E4EF}.placard.dark h3{color:#fff}
+.ctl{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;font-size:.98rem;margin:10px 0}
+.ctl label{font-weight:700;color:var(--muted)}
+.ctl input[type=range]{width:180px;accent-color:var(--teal)}
+.ctl select{font:inherit;padding:.25rem .4rem;border-radius:8px;border:2px solid var(--line)}
+button.b{font:inherit;font-size:.98rem;font-weight:700;padding:.45rem .95rem;border-radius:12px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+button.b.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+button.b.coral{background:var(--coral);border-color:var(--coral);color:#fff}
+button.b:disabled{opacity:.4;cursor:default}
+.mono,code{font-family:"Courier New","DejaVu Sans Mono",monospace}
+code{background:var(--bg);padding:0 .25em;border-radius:5px}
+.placard.dark code{background:#2C2C40}
+.stat{display:flex;gap:10px;flex-wrap:wrap}
+.stat div{flex:1;min-width:110px;border-radius:14px;padding:8px 12px;background:var(--bg)}
+.stat b{display:block;font-size:1.55rem;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.85rem}
+.note{color:var(--grey);font-size:.85rem;font-style:italic}
+table.t{border-collapse:separate;border-spacing:3px;font-size:.92rem;font-variant-numeric:tabular-nums}
+table.t td,table.t th{padding:4px 8px;border-radius:7px;text-align:center}
+table.t th{color:var(--muted);font-weight:700}
+.chk{display:inline-flex;gap:6px;align-items:center;font-weight:700;color:var(--muted);cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--teal)}
+.keys{position:fixed;right:14px;bottom:10px;font-size:.75rem;color:var(--grey);background:#fff;padding:4px 10px;border-radius:10px;border:1px solid var(--line)}
+svg text{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem}
+
+.gauge{display:grid;grid-template-columns:150px 1fr 70px;gap:8px;align-items:center;margin:6px 0;font-size:.95rem}
+.gauge .bar{position:relative;height:18px;background:var(--bg);border-radius:9px;overflow:hidden}
+.gauge .bar i{position:absolute;top:0;bottom:0;width:6px;margin-left:-3px;background:var(--teal);border-radius:3px}
+.gauge .bar .lim{position:absolute;top:0;bottom:0;width:2px;background:var(--coral)}
+.big{font-size:2.4rem;font-weight:700;font-variant-numeric:tabular-nums}
+
+.tabs.grouped{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:flex-start}
+.tabs.grouped .grp{display:flex;flex-direction:column;gap:5px}
+.tabs.grouped .grp>span{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tabs.grouped .grp>div{display:flex;gap:6px;flex-wrap:wrap}
+.tabs.grouped button{font-size:.9rem;padding:.4rem .75rem}
+.tabs.grouped button .n{display:inline-block;min-width:1.3em;margin-right:.35em;color:var(--teal);font-variant-numeric:tabular-nums}
+.tabs.grouped button.on .n{color:#fff}
+</style></head><body><div class="wrap">
+<div class="kicker">TARA · RL week 1 · interactive 04</div>
+<h1>CartPole and simple policies</h1>
+<p class="sub">Drive the cart by hand, then compare a few hand-written policies.</p>
+<div class="tabs grouped"><div class="grp"><span>CartPole</span><div><button data-tab="drive" class="on"><span class="n">1</span>Drive it</button><button data-tab="policies" class=""><span class="n">2</span>Hand-written policies</button></div></div></div>
+<section class="tab on" id="drive"><div class="grid">
+ <div><div class="stage"><canvas id="cv1" width="900" height="420"></canvas></div>
+  <div class="ctl"><button class="b primary" id="d_left">◀ push left (A / ←)</button><button class="b primary" id="d_right">push right (D / →) ▶</button><button class="b" id="d_reset">reset (R)</button>
+   <label>mode</label><select id="d_mode"><option value="step">one press = one step</option><option value="live">real time</option></select>
+   <label>speed</label><input type="range" id="d_speed" min="5" max="50" value="12"><span id="d_speedv" class="mono"></span></div>
+  <div id="gauges"></div>
+ </div>
+ <div class="side">
+  <div class="stat"><div><b id="d_ret">0</b><span>return so far = steps survived</span></div><div><b id="d_status">playing</b><span>episode status</span></div></div>
+  <div class="placard teal"><h3>What the agent sees</h3><p>Only these four numbers — no picture. Watch the angular velocity gauge: it moves <b>before</b> the angle does. Good players react to it.</p></div>
+  <div class="placard amber"><h3>Every step is a forced choice</h3><p>There is no "do nothing" action. Push left or push right, 50 times a second. In step mode you get as long as you like to decide.</p></div>
+  <div class="placard coral"><h3>How it ends</h3><p><b>terminated</b>: |angle| &gt; 12° or |position| &gt; 2.4 (the red dashes).<br><b>truncated</b>: you reached 500 steps — the clock stopped, the pole was fine. Both become <code>done = True</code>.</p></div>
+ </div></div></section>
+<section class="tab" id="policies"><div class="grid">
+ <div><div class="stage"><svg id="pol_hist"></svg></div>
+  <div class="ctl"><label>policy</label><select id="pol_sel">
+   <option value="right">always push right</option><option value="random">random 50 / 50</option><option value="lean">push toward the lean (angle)</option><option value="lean2">angle + angular velocity</option></select>
+   <button class="b primary" id="pol_run">▶ run 100 episodes</button><button class="b" id="pol_watch">watch one</button></div>
+  <div class="stage" style="margin-top:10px"><canvas id="cv3" width="900" height="260"></canvas></div>
+ </div>
+ <div class="side">
+  <div class="stat"><div><b id="pol_mean">—</b><span>mean return (≈ J)</span></div><div><b id="pol_sd">—</b><span>spread (std)</span></div><div><b id="pol_max">—</b><span>best of 100</span></div></div>
+  <table class="t" id="pol_tab"><tr><th>policy</th><th>mean</th><th>std</th></tr></table>
+  <div class="placard teal"><h3>The average is J</h3><p>Each episode is one sample of the return. The mean over 100 episodes is our estimate of J for that policy — exactly what the notebook's progress bar reports.</p></div>
+  <div class="placard amber"><h3>Why isn't random ≈ 0?</h3><p>Even random pushes take ~20 steps to lose the pole: falling takes time. That's the baseline to beat. "Always right" is <i>worse</i> than random — it shoves the cart one way.</p></div>
+  <div class="placard purple"><h3>The lesson for today</h3><p>"Angle + velocity" solves it — a policy that uses all of the state. VPG will discover a rule like this on its own, from nothing but +1s.</p></div>
+ </div></div></section>
+<section class="tab" id="markov" aria-hidden="true"><div class="grid">
+ <div><div class="stage"><canvas id="cv2" width="900" height="300"></canvas><svg id="mk_chart"></svg></div>
+  <div class="ctl"><label>same</label><select id="mk_what"><option value="pos">position (x = 0)</option><option value="ang">pole angle</option></select><label id="mk_thl">angle (both)</label><input type="range" id="mk_th" min="-8" max="8" step="0.5" value="4"><span id="mk_thv" class="mono"></span>
+   <label id="mk_wl">velocity A vs B</label><input type="range" id="mk_w" min="0" max="1.5" step="0.05" value="0.6"><span id="mk_wv" class="mono"></span></div>
+  <div class="ctl"><label>both receive the same actions</label><select id="mk_pol"><option value="alt">alternate left / right</option><option value="right">always push right</option><option value="left">always push left</option></select><button class="b primary" id="mk_run">▶ run 40 steps</button></div>
+ </div>
+ <div class="side">
+  <div class="placard"><h3>The experiment</h3><p>Cart <b style="color:var(--teal)">A</b> and cart <b style="color:var(--coral)">B</b> start in the <b>same place</b> (same position, or same pole angle). Only their <b>velocity</b> differs. Then both get identical pushes.</p></div>
+  <div class="placard teal"><h3>Read the chart</h3><p>Position (or angle) over time for both carts. If that one number were "the state", the two lines would have to stay together. They don't: the velocity was needed too.</p></div>
+  <div class="placard purple"><h3>Why this matters for RL</h3><p>The policy only sees the state. If the state were missing the velocity, the best action would be ambiguous — no policy could get it right. Markov = the state contains everything the future depends on.</p></div>
+  <div class="placard amber"><h3>Try</h3><p>Set the velocity gap to 0. Now A and B are the same state — their futures coincide exactly. The physics is deterministic; all the "randomness" in CartPole comes from the start state and the policy.</p></div>
+ </div></div></section>
+<section class="tab" id="snapshot" aria-hidden="true"><div class="grid">
+ <div>
+  <div class="stage"><canvas id="sn_cv" width="900" height="420"></canvas></div>
+  <div class="ctl"><label>world</label><select id="sn_world"><option value="pos">CartPole · cart position</option><option value="cart">CartPole · pole angle</option><option value="pong">Pong</option></select>
+   <label>the agent sees</label><select id="sn_mode"><option value="1">one snapshot</option><option value="2">snapshot + motion</option></select>
+   <button class="b" id="sn_new">new round</button></div>
+  <div class="ctl" id="sn_q"></div>
+ </div>
+ <div class="side">
+  <div class="stat"><div><b id="sn_s1">0 / 0</b><span>correct with one snapshot</span></div><div><b id="sn_s2">0 / 0</b><span>correct with motion</span></div></div>
+  <div class="placard"><h3>The question Markov asks</h3><p>If I freeze the world and show you only <b>now</b>, can you predict what happens next — as well as someone who watched the whole history?</p></div>
+  <div class="placard coral"><h3>One frame of Pong: no</h3><p>A still ball could be going anywhere. Guessing is a coin flip. DeepMind's Atari agents fix this by feeding the network the <b>last 4 frames</b> as the state.</p></div>
+  <div class="placard teal"><h3>CartPole angle alone: no</h3><p>A tilted pole might be falling or swinging back. That's why CartPole's state is 4 numbers, including the velocities. With them, the next moment is predictable.</p></div>
+  <div class="placard purple"><h3>The rule</h3><p>If one snapshot isn't enough, put more into the state. A chat model's state is all the text so far — Markov by construction.</p></div>
+ </div></div></section>
+</div>
+<script>// ---------- shared helpers for the TARA RL labs ----------
+const C = {teal:'#0E7C7B',tealLt:'#DCEEED',coral:'#E4572E',coralLt:'#FBE4DC',purple:'#6C4AB6',purpleLt:'#EAE3F7',
+  amber:'#B7791F',amberLt:'#FDF1D6',blue:'#2F6DB5',blueLt:'#DDE8F6',ink:'#1A1A1A',muted:'#4F5A63',line:'#C9D0D5',bg:'#F2F4F5',grey:'#8A949C',navy:'#20202F'};
+const NS='http://www.w3.org/2000/svg';
+function S(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs||{})e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function T(parent,x,y,txt,o){o=o||{};const e=S('text',{x,y,'font-size':o.size||16,fill:o.color||C.ink,'font-weight':o.bold?700:400,'text-anchor':o.anchor||'start','dominant-baseline':o.base||'middle'},parent);if(o.mono)e.setAttribute('font-family','Courier New, monospace');if(o.italic)e.setAttribute('font-style','italic');e.textContent=txt;return e;}
+function $(q){return document.querySelector(q)}
+function $$(q){return [...document.querySelectorAll(q)]}
+function fmt(v,d=2){if(!isFinite(v))return '—';const s=v.toFixed(d);return (/^-0\.?0*$/.test(s))?s.slice(1):s.replace('-','−')}
+function sig(z){return 1/(1+Math.exp(-z))}
+function rng(seed){let s=(seed>>>0)||1;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+function gauss(r){let u=0,v=0;while(u===0)u=r();v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function softmax(z){const m=Math.max(...z);const e=z.map(v=>Math.exp(v-m));const s=e.reduce((a,b)=>a+b,0);return e.map(v=>v/s)}
+function mix(a,b,t){const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16);const r=[16,8,0].map(s=>Math.round(((pa>>s)&255)*(1-t)+((pb>>s)&255)*t));return '#'+r.map(v=>v.toString(16).padStart(2,'0')).join('')}
+function mean(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:NaN}
+function std(a){const m=mean(a);return Math.sqrt(mean(a.map(v=>(v-m)*(v-m))))}
+// tabs
+function showTab(id){const b=document.querySelector('.tabs button[data-tab="'+id+'"]');if(!b)return false;$$('.tabs button[data-tab]').forEach(x=>x.classList.toggle('on',x===b));$$('section.tab').forEach(s=>s.classList.toggle('on',s.id===id));window.dispatchEvent(new CustomEvent('tab',{detail:id}));return true;}
+function initTabs(){$$('.tabs button[data-tab]').forEach(b=>b.onclick=()=>{showTab(b.dataset.tab);try{history.replaceState(null,'','#'+b.dataset.tab)}catch(e){}});
+ const h=()=>{const id=(location.hash||'').slice(1);if(id)showTab(id)};window.addEventListener('hashchange',h);setTimeout(h,0);}
+// ---------- CartPole (exact gym dynamics) ----------
+const CP={g:9.8,mc:1.0,mp:0.1,len:0.5,force:10,tau:0.02,thMax:12*2*Math.PI/360,xMax:2.4};
+CP.tm=CP.mc+CP.mp;CP.pml=CP.mp*CP.len;
+function cpReset(r){return [0,0,0,0].map(()=>(r()*0.1-0.05))}
+function cpStep(s,a){let [x,xd,th,thd]=s;const f=a===1?CP.force:-CP.force;const c=Math.cos(th),sn=Math.sin(th);
+  const tmp=(f+CP.pml*thd*thd*sn)/CP.tm;const tha=(CP.g*sn-c*tmp)/(CP.len*(4/3-CP.mp*c*c/CP.tm));const xa=tmp-CP.pml*tha*c/CP.tm;
+  x+=CP.tau*xd;xd+=CP.tau*xa;th+=CP.tau*thd;thd+=CP.tau*tha;const ns=[x,xd,th,thd];
+  const term=x<-CP.xMax||x>CP.xMax||th<-CP.thMax||th>CP.thMax;return {s:ns,term};}
+// draw cartpole on canvas ctx in box (x0,y0,w,h)
+function drawCart(ctx,s,box,o){o=o||{};const {x0,y0,w,h}=box;const sc=w/(2*CP.xMax*1.2);const gy=y0+h*0.82;const cx=x0+w/2+s[0]*sc;
+  ctx.save();ctx.fillStyle=o.bg||'#fff';ctx.fillRect(x0,y0,w,h);
+  ctx.strokeStyle=C.line;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x0+4,gy);ctx.lineTo(x0+w-4,gy);ctx.stroke();
+  [-CP.xMax,CP.xMax].forEach(lim=>{const lx=x0+w/2+lim*sc;ctx.strokeStyle=C.coral;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(lx,gy-h*0.6);ctx.lineTo(lx,gy+6);ctx.stroke();ctx.setLineDash([]);});
+  const cw=Math.max(26,w*0.11),ch=cw*0.45;ctx.fillStyle=o.dead?C.coral:C.navy;ctx.beginPath();ctx.roundRect?ctx.roundRect(cx-cw/2,gy-ch-6,cw,ch,4):ctx.rect(cx-cw/2,gy-ch-6,cw,ch);ctx.fill();
+  ctx.fillStyle=C.grey;[cx-cw*0.3,cx+cw*0.3].forEach(wx=>{ctx.beginPath();ctx.arc(wx,gy-4,cw*0.08,0,7);ctx.fill();});
+  const L=h*0.55,px=cx,py=gy-ch-6;ctx.strokeStyle=o.pole||C.amber;ctx.lineWidth=Math.max(4,w*0.014);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px+L*Math.sin(s[2]),py-L*Math.cos(s[2]));ctx.stroke();
+  ctx.fillStyle='#fff';ctx.strokeStyle=C.navy;ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py,4,0,7);ctx.fill();ctx.stroke();
+  if(o.arrow!=null){ctx.strokeStyle=C.teal;ctx.fillStyle=C.teal;ctx.lineWidth=3;const d=o.arrow===1?1:-1;const ax=cx+d*(cw/2+6),ay=gy-ch/2-6;ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax+d*22,ay);ctx.stroke();ctx.beginPath();ctx.moveTo(ax+d*30,ay);ctx.lineTo(ax+d*20,ay-6);ctx.lineTo(ax+d*20,ay+6);ctx.fill();}
+  ctx.restore();}
+// simple line chart into an <svg>: series=[{pts:[y...] or [[x,y]], color, width, dash, label}]
+function lineChart(svg,series,o){o=o||{};svg.innerHTML='';const W=o.W||600,H=o.H||300;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const m={l:o.ml||52,r:16,t:16,b:o.mb||38};const all=series.flatMap(s=>s.pts.map((p,i)=>Array.isArray(p)?p:[i,p]));
+  let xmin=o.xmin??Math.min(...all.map(p=>p[0])),xmax=o.xmax??Math.max(...all.map(p=>p[0])),ymin=o.ymin??Math.min(...all.map(p=>p[1])),ymax=o.ymax??Math.max(...all.map(p=>p[1]));
+  if(!isFinite(xmin)){xmin=0;xmax=1;ymin=0;ymax=1}if(xmax===xmin)xmax=xmin+1;if(ymax===ymin)ymax=ymin+1;
+  const X=v=>m.l+(v-xmin)/(xmax-xmin)*(W-m.l-m.r),Y=v=>H-m.b-(v-ymin)/(ymax-ymin)*(H-m.t-m.b);
+  const ticks=o.yticks||[ymin,(ymin+ymax)/2,ymax];ticks.forEach(t=>{S('line',{x1:m.l,x2:W-m.r,y1:Y(t),y2:Y(t),stroke:'#E3E7EA'},svg);T(svg,m.l-6,Y(t),o.yfmt?o.yfmt(t):fmt(t,o.yd??0),{anchor:'end',size:13,color:C.muted});});
+  S('line',{x1:m.l,x2:W-m.r,y1:H-m.b,y2:H-m.b,stroke:C.line},svg);
+  if(o.xlabel)T(svg,(m.l+W-m.r)/2,H-10,o.xlabel,{anchor:'middle',size:13,color:C.muted});
+  if(o.ylabel){const t=T(svg,14,(m.t+H-m.b)/2,o.ylabel,{anchor:'middle',size:13,color:C.muted});t.setAttribute('transform',`rotate(-90 14 ${(m.t+H-m.b)/2})`);}
+  (o.hlines||[]).forEach(h=>{S('line',{x1:m.l,x2:W-m.r,y1:Y(h.y),y2:Y(h.y),stroke:h.color||C.grey,'stroke-dasharray':'5 4','stroke-width':1.5},svg);if(h.label)T(svg,W-m.r-4,Y(h.y)-9,h.label,{anchor:'end',size:12,color:h.color||C.grey,bold:true});});
+  series.forEach(s=>{const pts=s.pts.map((p,i)=>Array.isArray(p)?p:[i,p]).filter(p=>isFinite(p[1]));if(!pts.length)return;
+    S('path',{d:pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(''),fill:'none',stroke:s.color||C.teal,'stroke-width':s.width||2.5,'stroke-dasharray':s.dash||'','stroke-linejoin':'round',opacity:s.opacity??1},svg);
+    if(s.dots)pts.forEach(p=>S('circle',{cx:X(p[0]),cy:Y(p[1]),r:3,fill:s.color||C.teal},svg));
+    if(s.label){const p=pts[pts.length-1];T(svg,Math.min(X(p[0])+4,W-m.r-2),Y(p[1]),s.label,{size:12,color:s.color,bold:true,anchor:X(p[0])>W-90?'end':'start'});}});
+  return {X,Y};}
+function histo(svg,vals,o){o=o||{};svg.innerHTML='';const W=o.W||600,H=o.H||260;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const m={l:40,r:14,t:14,b:36};const lo=o.lo??Math.min(...vals),hi=o.hi??Math.max(...vals);const nb=o.bins||20;const bw=(hi-lo)/nb||1;const cnt=new Array(nb).fill(0);
+  vals.forEach(v=>{let k=Math.floor((v-lo)/bw);k=Math.max(0,Math.min(nb-1,k));cnt[k]++;});const mx=Math.max(1,...cnt);
+  const X=v=>m.l+(v-lo)/(hi-lo||1)*(W-m.l-m.r),Y=c=>H-m.b-c/mx*(H-m.t-m.b);
+  cnt.forEach((c,i)=>S('rect',{x:X(lo+i*bw)+1,y:Y(c),width:Math.max(1,X(lo+bw)-X(lo)-2),height:H-m.b-Y(c),fill:o.color||C.amber,rx:2},svg));
+  S('line',{x1:m.l,x2:W-m.r,y1:H-m.b,y2:H-m.b,stroke:C.line},svg);
+  T(svg,m.l,H-14,fmt(lo,o.d??0),{size:13,color:C.muted});T(svg,W-m.r,H-14,fmt(hi,o.d??0),{size:13,color:C.muted,anchor:'end'});
+  if(o.xlabel)T(svg,(W)/2,H-14,o.xlabel,{size:13,color:C.muted,anchor:'middle'});
+  (o.marks||[]).forEach(mk=>{S('line',{x1:X(mk.v),x2:X(mk.v),y1:m.t,y2:H-m.b,stroke:mk.color,'stroke-width':3},svg);const nr=X(mk.v)>W-140;T(svg,X(mk.v)+(nr?-6:5),m.t+10+(mk.dy||0),mk.label,{size:13,color:mk.color,bold:true,anchor:nr?'end':'start'});});
+  return {X};}
+
+initTabs();
+
+// ===== cartpole_lab.src.html =====
+(()=>{
+
+
+// ---------- tab 1: drive ----------
+const r1=rng(7);let st=cpReset(r1),ret=0,dead=false,lastA=1,timer=null;
+const cv1=$('#cv1'),c1=cv1.getContext('2d');
+const G=[['cart position x',0,2.4,v=>fmt(v,2)],['cart velocity ẋ',1,3,v=>fmt(v,2)],['pole angle θ',2,CP.thMax,v=>fmt(v*180/Math.PI,1)+'°'],['angular velocity θ̇',3,3.5,v=>fmt(v,2)]];
+$('#gauges').innerHTML=G.map((g,i)=>`<div class="gauge"><b>${g[0]}</b><div class="bar" id="gb${i}">${(i===0||i===2)?'<span class="lim" style="left:'+(50-50/1.25)+'%"></span><span class="lim" style="left:'+(50+50/1.25)+'%"></span>':''}<i></i></div><span class="mono" id="gv${i}"></span></div>`).join('');
+function render1(){drawCart(c1,st,{x0:0,y0:0,w:900,h:420},{dead,arrow:dead?null:lastA});
+ G.forEach((g,i)=>{const lim=(i===0||i===2)?g[2]*1.25:g[2];const v=st[g[1]];$('#gb'+i+' i').style.left=Math.max(0,Math.min(100,50+50*v/lim))+'%';$('#gv'+i).textContent=g[3](v);});
+ $('#d_ret').textContent=ret;$('#d_status').textContent=dead?(ret>=500?'truncated':'terminated'):'playing';$('#d_status').style.color=dead?C.coral:C.teal;}
+function act(a){if(dead)return;lastA=a;const o=cpStep(st,a);st=o.s;ret+=1;if(o.term||ret>=500){dead=true;}render1();}
+function reset1(){st=cpReset(r1);ret=0;dead=false;render1();}
+$('#d_left').onclick=()=>{lastA=0;if($('#d_mode').value==='step')act(0)};$('#d_right').onclick=()=>{lastA=1;if($('#d_mode').value==='step')act(1)};$('#d_reset').onclick=reset1;
+function loop(){clearInterval(timer);if($('#d_mode').value==='live'){timer=setInterval(()=>act(lastA),1000/+$('#d_speed').value);}}
+$('#d_mode').onchange=loop;$('#d_speed').oninput=()=>{$('#d_speedv').textContent=$('#d_speed').value+' steps/s';loop()};$('#d_speedv').textContent=$('#d_speed').value+' steps/s';
+document.addEventListener('keydown',e=>{if(!$('#drive').classList.contains('on'))return;const k=e.key.toLowerCase();if(k==='a'||k==='arrowleft'){e.preventDefault();lastA=0;if($('#d_mode').value==='step')act(0)}else if(k==='d'||k==='arrowright'){e.preventDefault();lastA=1;if($('#d_mode').value==='step')act(1)}else if(k==='r')reset1();});
+render1();
+// ---------- tab 2: markov ----------
+const cv2=$('#cv2'),c2=cv2.getContext('2d');let A=null,B=null,hist=[];
+const mkPos=()=>$('#mk_what').value==='pos';
+function mkInit(){const th=+$('#mk_th').value*Math.PI/180,w=+$('#mk_w').value;
+ if(mkPos()){A=[0,w,0,0];B=[0,-w,0,0];hist=[[0,0]];$('#mk_wv').textContent='±'+w.toFixed(2)+' m/s';}
+ else{A=[0,0,th,-w*Math.sign(th||1)];B=[0,0,th,w*Math.sign(th||1)];hist=[[th,th]];$('#mk_wv').textContent='∓'+w.toFixed(2)+' rad/s';}
+ $('#mk_th').style.display=$('#mk_thl').style.display=$('#mk_thv').style.display=mkPos()?'none':'';
+ $('#mk_thv').textContent=$('#mk_th').value+'°';draw2();}
+function draw2(){drawCart(c2,A,{x0:0,y0:0,w:445,h:300},{pole:C.teal});drawCart(c2,B,{x0:455,y0:0,w:445,h:300},{pole:C.coral});
+ c2.font='bold 20px Calibri,Carlito,sans-serif';c2.fillStyle=C.teal;if(mkPos()){c2.fillText('A  x = '+fmt(A[0],2)+'  ẋ = '+fmt(A[1],2),14,26);c2.fillStyle=C.coral;c2.fillText('B  x = '+fmt(B[0],2)+'  ẋ = '+fmt(B[1],2),469,26);
+  lineChart($('#mk_chart'),[{pts:hist.map(h=>h[0]),color:C.teal,label:'A'},{pts:hist.map(h=>h[1]),color:C.coral,label:'B'}],{W:900,H:260,xmin:0,xmax:40,ymin:-1.5,ymax:1.5,yticks:[-1,0,1],xlabel:'step',ylabel:'position x'});}
+ else{c2.fillText('A  θ̇ = '+fmt(A[3],2),14,26);c2.fillStyle=C.coral;c2.fillText('B  θ̇ = '+fmt(B[3],2),469,26);
+ lineChart($('#mk_chart'),[{pts:hist.map(h=>h[0]*180/Math.PI),color:C.teal,label:'A'},{pts:hist.map(h=>h[1]*180/Math.PI),color:C.coral,label:'B'}],{W:900,H:260,xmin:0,xmax:40,ymin:-25,ymax:25,yticks:[-12,0,12],hlines:[{y:12,color:C.coral,label:'falls'},{y:-12,color:C.coral}],xlabel:'step',ylabel:'angle (°)'});}}
+let mkT=null;$('#mk_run').onclick=()=>{mkInit();clearInterval(mkT);let t=0,dA=false,dB=false;mkT=setInterval(()=>{const pol=$('#mk_pol').value;const a=pol==='right'?1:pol==='left'?0:(t%2);
+ const wA=dA,wB=dB; const st=(S)=>{const o=cpStep(S,a);return mkPos()?{s:[o.s[0],o.s[1],0,0],term:Math.abs(o.s[0])>CP.xMax}:o;}; if(!dA){const o=st(A);A=o.s;dA=o.term;} if(!dB){const o=st(B);B=o.s;dB=o.term;}
+ hist.push(mkPos()?[wA?NaN:A[0],wB?NaN:B[0]]:[wA?NaN:A[2],wB?NaN:B[2]]);draw2();
+ c2.font='bold 18px Calibri,Carlito,sans-serif';if(dA){c2.fillStyle=C.coral;c2.fillText('A fell',14,52);}if(dB){c2.fillStyle=C.coral;c2.fillText('B fell',469,52);}
+ if(++t>=40||(dA&&dB))clearInterval(mkT);},70);};
+['#mk_th','#mk_w'].forEach(q=>$(q).oninput=mkInit);$('#mk_what').onchange=mkInit;mkInit();
+// ---------- tab 3: policies ----------
+const POL={right:()=>1,random:(s,r)=>r()<0.5?1:0,lean:s=>s[2]>0?1:0,lean2:s=>(s[2]+0.5*s[3])>0?1:0};
+const NAMES={right:'always right',random:'random',lean:'toward lean',lean2:'angle + velocity'};
+const results={};
+function episode(p,r){let s=cpReset(r),n=0;while(n<500){const o=cpStep(s,POL[p](s,r));s=o.s;n++;if(o.term)break;}return n;}
+$('#pol_run').onclick=()=>{const p=$('#pol_sel').value,r=rng(1000+Object.keys(results).length*17);const v=[];for(let i=0;i<100;i++)v.push(episode(p,r));results[p]=v;
+ histo($('#pol_hist'),v,{lo:0,hi:500,bins:25,color:C.amber,W:900,H:300,marks:[{v:mean(v),color:C.teal,label:'mean '+fmt(mean(v),0)}],xlabel:'episode return (steps survived)'});
+ $('#pol_mean').textContent=fmt(mean(v),0);$('#pol_sd').textContent=fmt(std(v),0);$('#pol_max').textContent=Math.max(...v);
+ $('#pol_tab').innerHTML='<tr><th>policy</th><th>mean</th><th>std</th></tr>'+Object.keys(results).map(k=>`<tr><td style="text-align:left">${NAMES[k]}</td><td><b>${fmt(mean(results[k]),0)}</b></td><td>${fmt(std(results[k]),0)}</td></tr>`).join('');};
+const cv3=$('#cv3'),c3=cv3.getContext('2d');let wT=null;
+$('#pol_watch').onclick=()=>{clearInterval(wT);const p=$('#pol_sel').value,r=rng(Date.now()%9999);let s=cpReset(r),n=0;wT=setInterval(()=>{const a=POL[p](s,r);const o=cpStep(s,a);s=o.s;n++;drawCart(c3,s,{x0:0,y0:0,w:900,h:260},{arrow:a,dead:o.term});c3.font='bold 20px Calibri,Carlito,sans-serif';c3.fillStyle=C.ink;c3.fillText('step '+n,14,26);if(o.term||n>=500)clearInterval(wT);},20);};
+histo($('#pol_hist'),[],{lo:0,hi:500,W:900,H:300,xlabel:'episode return (steps survived)'});drawCart(c3,[0,0,0,0],{x0:0,y0:0,w:900,h:260});
+// ---------- snapshot game (Markov) ----------
+(()=>{const cv=$('#sn_cv'),cx=cv.getContext('2d');const rr=rng(77);let round=null,answered=false,anim=null;const score={1:[0,0],2:[0,0]};
+ const DIRS4=[[-1,-1],[1,-1],[-1,1],[1,1]],DN=['↖','↗','↙','↘'];
+ function newRound(){clearInterval(anim);answered=false;const w=$('#sn_world').value;
+  if(w==='pong'){const d=Math.floor(rr()*4);round={w,d,pos:[300+rr()*300,140+rr()*140]};}
+  else if(w==='pos'){const x=(rr()<0.5?-1:1)*(0.2+rr()*0.8),dir=rr()<0.5?1:-1;round={w,dir,s:[x,dir*(0.9+rr()*0.6),0,0]};}
+  else{const th=(rr()<0.5?-1:1)*(4+rr()*4)*Math.PI/180;const falling=rr()<0.5;round={w,falling,s:[0,0,th,(falling?1:-1)*Math.sign(th)*(0.6+rr()*0.4)]};}
+  draw();question();}
+ function drawPong(trail,ballPos){cx.fillStyle='#1E1E2E';cx.fillRect(0,0,900,420);cx.strokeStyle='#4A5260';cx.setLineDash([10,10]);cx.lineWidth=3;cx.beginPath();cx.moveTo(450,10);cx.lineTo(450,410);cx.stroke();cx.setLineDash([]);
+  cx.fillStyle='#E4E4EF';cx.fillRect(40,160,14,90);cx.fillRect(846,190,14,90);
+  (trail||[]).forEach((p,i)=>{cx.fillStyle=`rgba(228,228,239,${0.15+0.2*i})`;cx.beginPath();cx.arc(p[0],p[1],11,0,7);cx.fill();});
+  cx.fillStyle='#fff';cx.beginPath();cx.arc(ballPos[0],ballPos[1],12,0,7);cx.fill();}
+ function draw(){const m=+$('#sn_mode').value;
+  if(round.w==='pong'){const d=DIRS4[round.d];const trail=m===2?[1,2].map(k=>[round.pos[0]-d[0]*22*(3-k),round.pos[1]-d[1]*22*(3-k)]).reverse():[];drawPong(m===2?trail.reverse():[],round.pos);
+   cx.fillStyle='#A3AEB5';cx.font='18px Calibri,Carlito,sans-serif';cx.fillText(m===2?'last 3 frames shown (faint = older)':'one frame',20,30);}
+  else if(round.w==='pos'){const s=round.s;drawCart(cx,[s[0],0,0,0],{x0:0,y0:0,w:900,h:420});cx.fillStyle=C.muted;cx.font='18px Calibri,Carlito,sans-serif';cx.fillText('position x = '+fmt(s[0],2)+(m===2?'   ·   velocity ẋ = '+fmt(s[1],2):''),20,30);
+   if(m===2){const sc=900/(2*CP.xMax*1.2),gx=450+s[0]*sc,gy=420*0.82-60;cx.strokeStyle=C.purple;cx.fillStyle=C.purple;cx.lineWidth=5;const d=Math.sign(s[1]);cx.beginPath();cx.moveTo(gx,gy);cx.lineTo(gx+d*70,gy);cx.stroke();cx.beginPath();cx.moveTo(gx+d*84,gy);cx.lineTo(gx+d*68,gy-10);cx.lineTo(gx+d*68,gy+10);cx.fill();}}
+  else{const s=round.s;drawCart(cx,[0,0,s[2],0],{x0:0,y0:0,w:900,h:420});cx.fillStyle=C.muted;cx.font='18px Calibri,Carlito,sans-serif';cx.fillText('angle θ = '+fmt(s[2]*180/Math.PI,1)+'°'+(m===2?'   ·   angular velocity θ̇ = '+fmt(s[3],2):''),20,30);
+   if(m===2){const tipx=450+0.55*420*Math.sin(s[2])*1.0,tipy=420*0.82-0.55*420*Math.cos(s[2])-30;cx.strokeStyle=C.purple;cx.lineWidth=4;cx.beginPath();cx.moveTo(tipx,tipy);cx.lineTo(tipx+Math.sign(s[3])*60,tipy+8);cx.stroke();cx.fillStyle=C.purple;cx.beginPath();cx.arc(tipx+Math.sign(s[3])*60,tipy+8,6,0,7);cx.fill();}}}
+ function question(){const q=$('#sn_q');if(round.w==='pong'){q.innerHTML='<label>Which way is the ball going?</label>'+DN.map((d,i)=>`<button class="b primary" data-g="${i}">${d}</button>`).join('');}
+  else if(round.w==='pos')q.innerHTML='<label>Where will the cart be next moment?</label><button class="b primary" data-g="l">← further left</button><button class="b primary" data-g="r">further right →</button>';
+  else q.innerHTML='<label>Is the pole falling or recovering?</label><button class="b primary" data-g="fall">falling over</button><button class="b primary" data-g="rec">swinging back up</button>';
+  $$('#sn_q [data-g]').forEach(b=>b.onclick=()=>answer(b.dataset.g));}
+ function answer(g){if(answered)return;answered=true;const m=+$('#sn_mode').value;const ok=round.w==='pong'?(+g===round.d):round.w==='pos'?((g==='r')===(round.dir>0)):((g==='fall')===round.falling);score[m][1]++;if(ok)score[m][0]++;
+  $('#sn_s1').textContent=score[1].join(' / ');$('#sn_s2').textContent=score[2].join(' / ');
+  $('#sn_q').insertAdjacentHTML('beforeend',`<span class="pill" style="background:${ok?'var(--teal-lt)':'var(--coral-lt)'};color:${ok?'var(--teal)':'var(--coral)'}">${ok?'correct':'wrong'} — watch</span>`);
+  let k=0;if(round.w==='pong'){const d=DIRS4[round.d];let p=round.pos.slice();const tr=[];anim=setInterval(()=>{tr.push(p.slice());if(tr.length>4)tr.shift();p=[p[0]+d[0]*12,p[1]+d[1]*12];drawPong(tr,p);if(++k>18)clearInterval(anim)},50);}
+  else if(round.w==='pos'){let s=round.s.slice();anim=setInterval(()=>{s=[s[0]+s[1]*0.04,s[1],0,0];drawCart(cx,s,{x0:0,y0:0,w:900,h:420});if(++k>30||Math.abs(s[0])>CP.xMax)clearInterval(anim)},50);}
+  else{let s=round.s.slice();anim=setInterval(()=>{s=cpStep(s,k%2).s;drawCart(cx,s,{x0:0,y0:0,w:900,h:420},{dead:Math.abs(s[2])>CP.thMax});if(++k>40||Math.abs(s[2])>CP.thMax)clearInterval(anim)},50);}}
+ $('#sn_new').onclick=newRound;$('#sn_world').onchange=newRound;$('#sn_mode').onchange=()=>{if(!answered)draw();else newRound();};newRound();})();
+
+})();
+</script><!--presenter-->
+<style>
+.placard.pc>h3{cursor:pointer}
+.placard.pc>h3::after{content:" ▸";font-weight:400;opacity:.45}
+.placard.pc.open>h3::after{content:" ▾"}
+.placard.pc:not(.open)>*:not(h3){display:none}
+.placard.pc:not(.open){padding-bottom:10px}
+.placard.pc:not(.open)>h3{margin:0}
+#pnote{position:fixed;right:14px;bottom:12px;font:12px system-ui,sans-serif;color:#8a90a0;background:#fff;border:1px solid #e3e5ea;border-radius:8px;padding:4px 9px;cursor:pointer;z-index:99}
+</style>
+<script>
+(function(){
+  function setup(){
+    document.querySelectorAll('.placard').forEach(function(p){
+      if(p.classList.contains('pc')||p.id||p.querySelector('[id]')) return;
+      if(p.querySelector('table,canvas,svg,input,select,button,textarea,pre')) return;
+      var h=p.querySelector(':scope>h3'); if(!h) return;
+      var kids=[].slice.call(p.children).filter(function(c){return c!==h});
+      if(!kids.length) return;
+      p.classList.add('pc');
+      h.addEventListener('click',function(){p.classList.toggle('open')});
+    });
+  }
+  var all=false;
+  function toggleAll(){all=!all;document.querySelectorAll('.placard.pc').forEach(function(p){p.classList.toggle('open',all)});}
+  document.addEventListener('keydown',function(e){if((e.key==='n'||e.key==='N')&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){toggleAll();}});
+  window.addEventListener('load',function(){
+    setup();
+    var b=document.createElement('div');b.id='pnote';b.textContent='notes: click a heading · N = all';b.onclick=toggleAll;document.body.appendChild(b);
+    new MutationObserver(setup).observe(document.body,{childList:true,subtree:true});
+  });
+})();
+</script>
+</body></html>

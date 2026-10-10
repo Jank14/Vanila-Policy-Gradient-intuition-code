@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probes and Training — TARA RL</title>
+<style>:root{--teal:#0E7C7B;--teal-lt:#DCEEED;--coral:#E4572E;--coral-lt:#FBE4DC;--purple:#6C4AB6;--purple-lt:#EAE3F7;--amber:#B7791F;--amber-lt:#FDF1D6;--blue:#2F6DB5;--blue-lt:#DDE8F6;--ink:#1A1A1A;--muted:#4F5A63;--line:#C9D0D5;--bg:#F2F4F5;--code:#1E1E2E;--grey:#8A949C;--page:#FFFFFF}
+*{box-sizing:border-box}
+html{font-size:20px}
+@media (min-width:1700px){html{font-size:23px}}
+@media (max-width:900px){html{font-size:16px}}
+body{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif;margin:0;background:var(--page);color:var(--ink);line-height:1.35}
+.wrap{max-width:1800px;margin:0 auto;padding:20px 30px 40px}
+.kicker{font-size:.78rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
+h1{font-size:1.9rem;margin:.1em 0 .15em}
+.sub{color:var(--muted);font-size:1.02rem;margin:0 0 .6rem;max-width:80ch}
+.tabs{display:flex;flex-wrap:wrap;gap:10px;margin:.5rem 0 1rem;align-items:center}
+.tabs button{font:inherit;font-size:.95rem;font-weight:700;padding:.45rem .9rem;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.tabs button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+section.tab{display:none}
+section.tab.on{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:24px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.stage{border:2px solid var(--line);border-radius:18px;padding:12px;background:#fff;position:relative}
+.stage canvas,.stage svg{width:100%;height:auto;display:block}
+.side{display:flex;flex-direction:column;gap:14px}
+.placard{border-radius:16px;padding:14px 18px;background:var(--bg);font-size:1.02rem}
+.placard h3{margin:0 0 .3rem;font-size:1.15rem}
+.placard p{margin:.25rem 0}
+.placard.teal{background:var(--teal-lt)}.placard.teal h3{color:var(--teal)}
+.placard.coral{background:var(--coral-lt)}.placard.coral h3{color:var(--coral)}
+.placard.purple{background:var(--purple-lt)}.placard.purple h3{color:var(--purple)}
+.placard.amber{background:var(--amber-lt)}.placard.amber h3{color:var(--amber)}
+.placard.dark{background:var(--code);color:#E4E4EF}.placard.dark h3{color:#fff}
+.ctl{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;font-size:.98rem;margin:10px 0}
+.ctl label{font-weight:700;color:var(--muted)}
+.ctl input[type=range]{width:180px;accent-color:var(--teal)}
+.ctl select{font:inherit;padding:.25rem .4rem;border-radius:8px;border:2px solid var(--line)}
+button.b{font:inherit;font-size:.98rem;font-weight:700;padding:.45rem .95rem;border-radius:12px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+button.b.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+button.b.coral{background:var(--coral);border-color:var(--coral);color:#fff}
+button.b:disabled{opacity:.4;cursor:default}
+.mono,code{font-family:"Courier New","DejaVu Sans Mono",monospace}
+code{background:var(--bg);padding:0 .25em;border-radius:5px}
+.placard.dark code{background:#2C2C40}
+.stat{display:flex;gap:10px;flex-wrap:wrap}
+.stat div{flex:1;min-width:110px;border-radius:14px;padding:8px 12px;background:var(--bg)}
+.stat b{display:block;font-size:1.55rem;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.85rem}
+.note{color:var(--grey);font-size:.85rem;font-style:italic}
+table.t{border-collapse:separate;border-spacing:3px;font-size:.92rem;font-variant-numeric:tabular-nums}
+table.t td,table.t th{padding:4px 8px;border-radius:7px;text-align:center}
+table.t th{color:var(--muted);font-weight:700}
+.chk{display:inline-flex;gap:6px;align-items:center;font-weight:700;color:var(--muted);cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--teal)}
+.keys{position:fixed;right:14px;bottom:10px;font-size:.75rem;color:var(--grey);background:#fff;padding:4px 10px;border-radius:10px;border:1px solid var(--line)}
+svg text{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem}
+
+.cfg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 14px;background:var(--bg);border-radius:16px;padding:14px 16px}
+@media (max-width:1100px){.cfg{grid-template-columns:repeat(2,1fr)}}
+.cfg label{display:block;font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:3px;font-family:"Courier New",monospace}
+.cfg select,.cfg input[type=number]{font:inherit;width:100%;padding:.25rem .4rem;border-radius:8px;border:2px solid var(--line);background:#fff}
+#log{max-height:240px;overflow:auto}
+#log td{background:var(--bg)}
+
+.tabs.grouped{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:flex-start}
+.tabs.grouped .grp{display:flex;flex-direction:column;gap:5px}
+.tabs.grouped .grp>span{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tabs.grouped .grp>div{display:flex;gap:6px;flex-wrap:wrap}
+.tabs.grouped button{font-size:.9rem;padding:.4rem .75rem}
+.tabs.grouped button .n{display:inline-block;min-width:1.3em;margin-right:.35em;color:var(--teal);font-variant-numeric:tabular-nums}
+.tabs.grouped button.on .n{color:#fff}
+</style></head><body><div class="wrap">
+<div class="kicker">TARA · RL week 1 · interactive 11</div>
+<h1>Probes, then the real run</h1>
+<p class="sub">Test the pieces on tiny worlds, then train VPG on CartPole with the notebook settings.</p>
+<div class="tabs grouped"><div class="grp"><span>Notebook</span><div><button data-tab="probes" class="on"><span class="n">1</span>Probes</button><button data-tab="train" class=""><span class="n">2</span>Train VPG</button></div></div></div>
+<section class="tab on" id="probes"><div class="grid">
+ <div>
+  <div class="ctl"><label>probe</label><select id="pr_which"><option value="4">Probe 4</option><option value="5">Probe 5</option></select>
+   <label class="chk" style="color:var(--coral)"><input type="checkbox" id="pr_flip"> bug: return −joy</label>
+   <button class="b primary" id="pr_go">▶ run test_probe</button></div>
+  <div class="stage"><svg id="pr_chart"></svg></div>
+ </div>
+ <div class="side">
+  <div class="stat"><div><b id="pr_res">—</b><span>result</span></div><div><b id="pr_probs">—</b><span>final probabilities</span></div></div>
+  <div class="placard" id="pr_desc"></div>
+  <div class="placard teal"><h3>Why probes</h3><p>If CartPole doesn't learn, the bug could be in any of 9 functions. A probe is a world so small that the right answer is known — so a failure points at one piece.</p></div>
+  <div class="placard amber"><h3>One-step games</h3><p>Every episode is a single step (done = True every time), so G = r. Probes test the <b>sign</b> of the loss, the log-probs and the update — not <code>compute_returns</code>.</p></div>
+  <div class="placard coral"><h3>Tick the bug</h3><p>With <code>−joy</code> the optimiser maximises the wrong thing: the policy moves <b>away</b> from the rewarded action and the probe fails.</p></div>
+ </div></div></section>
+<section class="tab" id="train">
+<p class="sub">The notebook's algorithm, line for line: vectorised CartPole, <code>PolicyNetwork</code>, <code>compute_returns</code>, <code>normalize_returns</code>, the per-timestep baseline, <code>mean(log π · adv)</code>, Adam with <code>maximize=True</code>. Same defaults as <code>args_fast</code>. Break it on purpose.</p>
+<div class="cfg">
+ <div><label>num_envs</label><select id="c_env"><option>4</option><option>8</option><option>16</option><option selected>32</option></select></div>
+ <div><label>num_steps_per_rollout</label><select id="c_T"><option>100</option><option>200</option><option selected>500</option></select></div>
+ <div><label>total_timesteps</label><select id="c_tot"><option value="160000">160,000</option><option value="320000">320,000</option><option value="640000" selected>640,000</option></select></div>
+ <div><label>lr</label><select id="c_lr"><option>0.001</option><option>0.005</option><option selected>0.02</option><option>0.05</option></select></div>
+ <div><label>gamma</label><select id="c_g"><option>0.9</option><option>0.95</option><option selected>0.99</option><option>1.0</option></select></div>
+ <div><label>hidden_sizes</label><select id="c_h"><option value="120,84" selected>[120, 84] (notebook)</option><option value="32,32">[32, 32] (faster)</option></select></div>
+ <div><label>seed</label><input type="number" id="c_seed" value="1337"></div>
+ <div style="display:flex;flex-direction:column;gap:4px;justify-content:center">
+  <label class="chk" style="font-family:inherit"><input type="checkbox" id="c_norm" checked> normalize_returns</label>
+  <label class="chk" style="font-family:inherit"><input type="checkbox" id="c_base" checked> baseline (dim=0 mean)</label>
+  <label class="chk" style="font-family:inherit;color:var(--coral)"><input type="checkbox" id="c_flip"> bug: return −joy</label></div>
+</div>
+<div class="ctl"><button class="b primary" id="go">▶ train</button><button class="b" id="stop" disabled>■ stop</button><button class="b" id="preset">reset to args_fast</button><button class="b" id="clear">clear old runs</button><span class="note" id="status"></span></div>
+<div class="grid">
+ <div><div class="stage"><svg id="curve"></svg></div>
+  <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+   <div class="stage"><canvas id="anim" width="600" height="300"></canvas><div class="note" id="animcap">env 0 of the latest rollout, replayed</div></div>
+   <div class="stage"><canvas id="pmap" width="600" height="300"></canvas><div class="note">what the network learned: π(right | θ, θ̇), with x = ẋ = 0</div></div>
+  </div></div>
+ <div class="side">
+  <div class="stat"><div><b id="s_upd">0</b><span>updates</span></div><div><b id="s_G">—</b><span>G (first episode, mean over envs)</span></div><div><b id="s_t">—</b><span>seconds</span></div></div>
+  <div id="log"></div>
+  <div class="placard teal"><h3>Read the curve like the progress bar</h3><p>Each point is one update: the mean return of every env's <b>first</b> episode in that rollout, ± 95% CI. Old runs stay grey so you can compare settings.</p></div>
+  <div class="placard amber"><h3>Experiments worth running</h3><p>① defaults · ② untick baseline <i>and</i> normalize at lr 0.02 · ③ tick the −joy bug · ④ num_envs 4 · ⑤ γ = 0.9 (it can only see ~10 steps ahead)</p></div>
+  <div class="placard coral"><h3>Watch joy in the log</h3><p>It hovers near 0 and doesn't track performance — it's a surrogate whose only job is its gradient. Once every env hits 500, each column's returns are identical, the baseline cancels them, and joy (and the gradient) is exactly 0: nothing left to learn.</p></div>
+  <div class="placard purple"><h3>The policy map</h3><p>Teal = push right, purple = push left. The trained net pushes toward where the pole is <i>going</i>: mostly by angular velocity, with the boundary tilted by the angle — the "angle + velocity" rule from Lab 1, found from +1s alone.</p></div>
+ </div></div>
+</section>
+</div>
+<script>// ---------- shared helpers for the TARA RL labs ----------
+const C = {teal:'#0E7C7B',tealLt:'#DCEEED',coral:'#E4572E',coralLt:'#FBE4DC',purple:'#6C4AB6',purpleLt:'#EAE3F7',
+  amber:'#B7791F',amberLt:'#FDF1D6',blue:'#2F6DB5',blueLt:'#DDE8F6',ink:'#1A1A1A',muted:'#4F5A63',line:'#C9D0D5',bg:'#F2F4F5',grey:'#8A949C',navy:'#20202F'};
+const NS='http://www.w3.org/2000/svg';
+function S(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs||{})e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function T(parent,x,y,txt,o){o=o||{};const e=S('text',{x,y,'font-size':o.size||16,fill:o.color||C.ink,'font-weight':o.bold?700:400,'text-anchor':o.anchor||'start','dominant-baseline':o.base||'middle'},parent);if(o.mono)e.setAttribute('font-family','Courier New, monospace');if(o.italic)e.setAttribute('font-style','italic');e.textContent=txt;return e;}
+function $(q){return document.querySelector(q)}
+function $$(q){return [...document.querySelectorAll(q)]}
+function fmt(v,d=2){if(!isFinite(v))return '—';const s=v.toFixed(d);return (/^-0\.?0*$/.test(s))?s.slice(1):s.replace('-','−')}
+function sig(z){return 1/(1+Math.exp(-z))}
+function rng(seed){let s=(seed>>>0)||1;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+function gauss(r){let u=0,v=0;while(u===0)u=r();v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function softmax(z){const m=Math.max(...z);const e=z.map(v=>Math.exp(v-m));const s=e.reduce((a,b)=>a+b,0);return e.map(v=>v/s)}
+function mix(a,b,t){const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16);const r=[16,8,0].map(s=>Math.round(((pa>>s)&255)*(1-t)+((pb>>s)&255)*t));return '#'+r.map(v=>v.toString(16).padStart(2,'0')).join('')}
+function mean(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:NaN}
+function std(a){const m=mean(a);return Math.sqrt(mean(a.map(v=>(v-m)*(v-m))))}
+// tabs
+function showTab(id){const b=document.querySelector('.tabs button[data-tab="'+id+'"]');if(!b)return false;$$('.tabs button[data-tab]').forEach(x=>x.classList.toggle('on',x===b));$$('section.tab').forEach(s=>s.classList.toggle('on',s.id===id));window.dispatchEvent(new CustomEvent('tab',{detail:id}));return true;}
+function initTabs(){$$('.tabs button[data-tab]').forEach(b=>b.onclick=()=>{showTab(b.dataset.tab);try{history.replaceState(null,'','#'+b.dataset.tab)}catch(e){}});
+ const h=()=>{const id=(location.hash||'').slice(1);if(id)showTab(id)};window.addEventListener('hashchange',h);setTimeout(h,0);}
+// ---------- CartPole (exact gym dynamics) ----------
+const CP={g:9.8,mc:1.0,mp:0.1,len:0.5,force:10,tau:0.02,thMax:12*2*Math.PI/360,xMax:2.4};
+CP.tm=CP.mc+CP.mp;CP.pml=CP.mp*CP.len;
+function cpReset(r){return [0,0,0,0].map(()=>(r()*0.1-0.05))}
+function cpStep(s,a){let [x,xd,th,thd]=s;const f=a===1?CP.force:-CP.force;const c=Math.cos(th),sn=Math.sin(th);
+  const tmp=(f+CP.pml*thd*thd*sn)/CP.tm;const tha=(CP.g*sn-c*tmp)/(CP.len*(4/3-CP.mp*c*c/CP.tm));const xa=tmp-CP.pml*tha*c/CP.tm;
+  x+=CP.tau*xd;xd+=CP.tau*xa;th+=CP.tau*thd;thd+=CP.tau*tha;const ns=[x,xd,th,thd];
+  const term=x<-CP.xMax||x>CP.xMax||th<-CP.thMax||th>CP.thMax;return {s:ns,term};}
+// draw cartpole on canvas ctx in box (x0,y0,w,h)
+function drawCart(ctx,s,box,o){o=o||{};const {x0,y0,w,h}=box;const sc=w/(2*CP.xMax*1.2);const gy=y0+h*0.82;const cx=x0+w/2+s[0]*sc;
+  ctx.save();ctx.fillStyle=o.bg||'#fff';ctx.fillRect(x0,y0,w,h);
+  ctx.strokeStyle=C.line;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x0+4,gy);ctx.lineTo(x0+w-4,gy);ctx.stroke();
+  [-CP.xMax,CP.xMax].forEach(lim=>{const lx=x0+w/2+lim*sc;ctx.strokeStyle=C.coral;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(lx,gy-h*0.6);ctx.lineTo(lx,gy+6);ctx.stroke();ctx.setLineDash([]);});
+  const cw=Math.max(26,w*0.11),ch=cw*0.45;ctx.fillStyle=o.dead?C.coral:C.navy;ctx.beginPath();ctx.roundRect?ctx.roundRect(cx-cw/2,gy-ch-6,cw,ch,4):ctx.rect(cx-cw/2,gy-ch-6,cw,ch);ctx.fill();
+  ctx.fillStyle=C.grey;[cx-cw*0.3,cx+cw*0.3].forEach(wx=>{ctx.beginPath();ctx.arc(wx,gy-4,cw*0.08,0,7);ctx.fill();});
+  const L=h*0.55,px=cx,py=gy-ch-6;ctx.strokeStyle=o.pole||C.amber;ctx.lineWidth=Math.max(4,w*0.014);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px+L*Math.sin(s[2]),py-L*Math.cos(s[2]));ctx.stroke();
+  ctx.fillStyle='#fff';ctx.strokeStyle=C.navy;ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py,4,0,7);ctx.fill();ctx.stroke();
+  if(o.arrow!=null){ctx.strokeStyle=C.teal;ctx.fillStyle=C.teal;ctx.lineWidth=3;const d=o.arrow===1?1:-1;const ax=cx+d*(cw/2+6),ay=gy-ch/2-6;ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax+d*22,ay);ctx.stroke();ctx.beginPath();ctx.moveTo(ax+d*30,ay);ctx.lineTo(ax+d*20,ay-6);ctx.lineTo(ax+d*20,ay+6);ctx.fill();}
+  ctx.restore();}
+// simple line chart into an <svg>: series=[{pts:[y...] or [[x,y]], color, width, dash, label}]
+function lineChart(svg,series,o){o=o||{};svg.innerHTML='';const W=o.W||600,H=o.H||300;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const m={l:o.ml||52,r:16,t:16,b:o.mb||38};const all=series.flatMap(s=>s.pts.map((p,i)=>Array.isArray(p)?p:[i,p]));
+  let xmin=o.xmin??Math.min(...all.map(p=>p[0])),xmax=o.xmax??Math.max(...all.map(p=>p[0])),ymin=o.ymin??Math.min(...all.map(p=>p[1])),ymax=o.ymax??Math.max(...all.map(p=>p[1]));
+  if(!isFinite(xmin)){xmin=0;xmax=1;ymin=0;ymax=1}if(xmax===xmin)xmax=xmin+1;if(ymax===ymin)ymax=ymin+1;
+  const X=v=>m.l+(v-xmin)/(xmax-xmin)*(W-m.l-m.r),Y=v=>H-m.b-(v-ymin)/(ymax-ymin)*(H-m.t-m.b);
+  const ticks=o.yticks||[ymin,(ymin+ymax)/2,ymax];ticks.forEach(t=>{S('line',{x1:m.l,x2:W-m.r,y1:Y(t),y2:Y(t),stroke:'#E3E7EA'},svg);T(svg,m.l-6,Y(t),o.yfmt?o.yfmt(t):fmt(t,o.yd??0),{anchor:'end',size:13,color:C.muted});});
+  S('line',{x1:m.l,x2:W-m.r,y1:H-m.b,y2:H-m.b,stroke:C.line},svg);
+  if(o.xlabel)T(svg,(m.l+W-m.r)/2,H-10,o.xlabel,{anchor:'middle',size:13,color:C.muted});
+  if(o.ylabel){const t=T(svg,14,(m.t+H-m.b)/2,o.ylabel,{anchor:'middle',size:13,color:C.muted});t.setAttribute('transform',`rotate(-90 14 ${(m.t+H-m.b)/2})`);}
+  (o.hlines||[]).forEach(h=>{S('line',{x1:m.l,x2:W-m.r,y1:Y(h.y),y2:Y(h.y),stroke:h.color||C.grey,'stroke-dasharray':'5 4','stroke-width':1.5},svg);if(h.label)T(svg,W-m.r-4,Y(h.y)-9,h.label,{anchor:'end',size:12,color:h.color||C.grey,bold:true});});
+  series.forEach(s=>{const pts=s.pts.map((p,i)=>Array.isArray(p)?p:[i,p]).filter(p=>isFinite(p[1]));if(!pts.length)return;
+    S('path',{d:pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(''),fill:'none',stroke:s.color||C.teal,'stroke-width':s.width||2.5,'stroke-dasharray':s.dash||'','stroke-linejoin':'round',opacity:s.opacity??1},svg);
+    if(s.dots)pts.forEach(p=>S('circle',{cx:X(p[0]),cy:Y(p[1]),r:3,fill:s.color||C.teal},svg));
+    if(s.label){const p=pts[pts.length-1];T(svg,Math.min(X(p[0])+4,W-m.r-2),Y(p[1]),s.label,{size:12,color:s.color,bold:true,anchor:X(p[0])>W-90?'end':'start'});}});
+  return {X,Y};}
+function histo(svg,vals,o){o=o||{};svg.innerHTML='';const W=o.W||600,H=o.H||260;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const m={l:40,r:14,t:14,b:36};const lo=o.lo??Math.min(...vals),hi=o.hi??Math.max(...vals);const nb=o.bins||20;const bw=(hi-lo)/nb||1;const cnt=new Array(nb).fill(0);
+  vals.forEach(v=>{let k=Math.floor((v-lo)/bw);k=Math.max(0,Math.min(nb-1,k));cnt[k]++;});const mx=Math.max(1,...cnt);
+  const X=v=>m.l+(v-lo)/(hi-lo||1)*(W-m.l-m.r),Y=c=>H-m.b-c/mx*(H-m.t-m.b);
+  cnt.forEach((c,i)=>S('rect',{x:X(lo+i*bw)+1,y:Y(c),width:Math.max(1,X(lo+bw)-X(lo)-2),height:H-m.b-Y(c),fill:o.color||C.amber,rx:2},svg));
+  S('line',{x1:m.l,x2:W-m.r,y1:H-m.b,y2:H-m.b,stroke:C.line},svg);
+  T(svg,m.l,H-14,fmt(lo,o.d??0),{size:13,color:C.muted});T(svg,W-m.r,H-14,fmt(hi,o.d??0),{size:13,color:C.muted,anchor:'end'});
+  if(o.xlabel)T(svg,(W)/2,H-14,o.xlabel,{size:13,color:C.muted,anchor:'middle'});
+  (o.marks||[]).forEach(mk=>{S('line',{x1:X(mk.v),x2:X(mk.v),y1:m.t,y2:H-m.b,stroke:mk.color,'stroke-width':3},svg);const nr=X(mk.v)>W-140;T(svg,X(mk.v)+(nr?-6:5),m.t+10+(mk.dy||0),mk.label,{size:13,color:mk.color,bold:true,anchor:nr?'end':'start'});});
+  return {X};}
+
+initTabs();
+
+// ===== vpg_trainer.src.html =====
+(()=>{
+
+
+// ---------- MLP 4-h1-h2-2 with ReLU ----------
+function makeNet(h1,h2,r){const sizes=[4,h1,h2,2];const L=[];for(let i=0;i<3;i++){const fi=sizes[i],fo=sizes[i+1],k=1/Math.sqrt(fi);const W=new Float32Array(fi*fo),b=new Float32Array(fo);for(let j=0;j<W.length;j++)W[j]=(r()*2-1)*k;for(let j=0;j<fo;j++)b[j]=(r()*2-1)*k;L.push({fi,fo,W,b,gW:new Float32Array(fi*fo),gb:new Float32Array(fo),mW:new Float32Array(fi*fo),vW:new Float32Array(fi*fo),mb:new Float32Array(fo),vb:new Float32Array(fo)});}return {L,sizes,t:0};}
+function forward(net,x,h1o,h2o){const [A,B,Cc]=net.L;for(let j=0;j<A.fo;j++){let s=A.b[j];for(let i=0;i<4;i++)s+=x[i]*A.W[i*A.fo+j];h1o[j]=s>0?s:0;}
+ for(let j=0;j<B.fo;j++){let s=B.b[j];for(let i=0;i<B.fi;i++)s+=h1o[i]*B.W[i*B.fo+j];h2o[j]=s>0?s:0;}
+ let z0=Cc.b[0],z1=Cc.b[1];for(let i=0;i<Cc.fi;i++){z0+=h2o[i]*Cc.W[i*2];z1+=h2o[i]*Cc.W[i*2+1];}return [z0,z1];}
+function adamStep(net,lr){net.t++;const b1=0.9,b2=0.999,eps=1e-5,c1=1-Math.pow(b1,net.t),c2=1-Math.pow(b2,net.t);
+ for(const l of net.L){for(const [p,g,m,v] of [[l.W,l.gW,l.mW,l.vW],[l.b,l.gb,l.mb,l.vb]]){for(let j=0;j<p.length;j++){m[j]=b1*m[j]+(1-b1)*g[j];v[j]=b2*v[j]+(1-b2)*g[j]*g[j];p[j]+=lr*(m[j]/c1)/(Math.sqrt(v[j]/c2)+eps);g[j]=0;}}}} // maximize=True → +
+// ---------- training ----------
+let runs=[],cur=null,stopFlag=false,animFrames=[],animI=0;
+const COLORS=[C.teal,C.purple,C.coral,C.amber,C.blue,'#3A7D44'];
+function cfg(){return {E:+$('#c_env').value,T:+$('#c_T').value,tot:+$('#c_tot').value,lr:+$('#c_lr').value,g:+$('#c_g').value,h:$('#c_h').value.split(',').map(Number),seed:+$('#c_seed').value,norm:$('#c_norm').checked,base:$('#c_base').checked,flip:$('#c_flip').checked};}
+function label(c){return `E${c.E}·T${c.T}·lr${c.lr}·γ${c.g}${c.base?'':' ·noBase'}${c.norm?'':' ·noNorm'}${c.flip?' ·−joy':''}`}
+async function train(){const c=cfg();const r=rng(c.seed);const net=makeNet(c.h[0],c.h[1],r);const H1=c.h[0],H2=c.h[1];const N=c.E*c.T;
+ const OBS=new Float32Array(N*4),ACT=new Uint8Array(N),P=new Float32Array(N*2),HA=new Float32Array(N*H1),HB=new Float32Array(N*H2),REW=new Float32Array(N),DONE=new Uint8Array(N);
+ const nUpd=Math.floor(c.tot/N);const run={c,pts:[],color:COLORS[runs.length%COLORS.length],label:label(c)};runs.push(run);cur=run;const t0=performance.now();
+ const h1=new Float32Array(H1),h2=new Float32Array(H2),dh2=new Float32Array(H2),dh1=new Float32Array(H1);$('#log').innerHTML='<table class="t" style="width:100%"><tr><th>update</th><th>G ± CI</th><th>max</th><th>joy</th></tr></table>';
+ for(let u=0;u<nUpd&&!stopFlag;u++){
+  // ---- gen_rollout (full reset) ----
+  const S_=[];for(let e=0;e<c.E;e++)S_.push(cpReset(r));const epLen=new Array(c.E).fill(0);animFrames=[];
+  for(let t=0;t<c.T;t++){for(let e=0;e<c.E;e++){const k=e*c.T+t;const s=S_[e];OBS.set(s,k*4);const z=forward(net,s,h1,h2);HA.set(h1,k*H1);HB.set(h2,k*H2);
+    const m=Math.max(z[0],z[1]),e0=Math.exp(z[0]-m),e1=Math.exp(z[1]-m),pr=e1/(e0+e1);P[k*2]=1-pr;P[k*2+1]=pr;const a=r()<pr?1:0;ACT[k]=a;
+    const o=cpStep(s,a);epLen[e]++;const done=o.term||epLen[e]>=500;REW[k]=1;DONE[k]=done?1:0;if(e===0)animFrames.push({s,a,d:done});if(done){S_[e]=cpReset(r);epLen[e]=0;}else S_[e]=o.s;}}
+  // ---- logging: first-episode return ----
+  const fe=[];for(let e=0;e<c.E;e++){let g=0;for(let t=0;t<c.T;t++){g+=REW[e*c.T+t];if(DONE[e*c.T+t])break;}fe.push(g);}
+  const mG=mean(fe),ci=1.96*std(fe)/Math.sqrt(c.E);
+  // ---- compute_returns ----
+  const G=new Float32Array(N);for(let e=0;e<c.E;e++){let acc=0;for(let t=c.T-1;t>=0;t--){const k=e*c.T+t;acc=REW[k]+c.g*acc*(DONE[k]?0:1);G[k]=acc;}}
+  if(c.norm){let m=0;for(let k=0;k<N;k++)m+=G[k];m/=N;let v=0;for(let k=0;k<N;k++)v+=(G[k]-m)**2;const sd=Math.sqrt(v/(N-1))+1e-8;for(let k=0;k<N;k++)G[k]=(G[k]-m)/sd;}
+  const ADV=new Float32Array(N);for(let t=0;t<c.T;t++){let b=0;if(c.base){for(let e=0;e<c.E;e++)b+=G[e*c.T+t];b/=c.E;}for(let e=0;e<c.E;e++)ADV[e*c.T+t]=G[e*c.T+t]-b;}
+  // ---- joy + backward ----
+  const sign=c.flip?-1:1;let joy=0;const [A,B,Cc]=net.L;
+  for(let k=0;k<N;k++){const a=ACT[k];joy+=Math.log(P[k*2+a])*ADV[k];const w=sign*ADV[k]/N;const d0=w*((a===0?1:0)-P[k*2]),d1=w*((a===1?1:0)-P[k*2+1]);
+   const hb=HB.subarray(k*H2,(k+1)*H2),ha=HA.subarray(k*H1,(k+1)*H1),x=OBS.subarray(k*4,k*4+4);
+   for(let i=0;i<H2;i++){Cc.gW[i*2]+=hb[i]*d0;Cc.gW[i*2+1]+=hb[i]*d1;dh2[i]=hb[i]>0?(Cc.W[i*2]*d0+Cc.W[i*2+1]*d1):0;}Cc.gb[0]+=d0;Cc.gb[1]+=d1;
+   for(let i=0;i<H1;i++){let s=0;const base=i*H2;if(ha[i]>0){for(let j=0;j<H2;j++){B.gW[base+j]+=ha[i]*dh2[j];s+=B.W[base+j]*dh2[j];}}dh1[i]=ha[i]>0?s:0;}for(let j=0;j<H2;j++)B.gb[j]+=dh2[j];
+   for(let i=0;i<4;i++){const base=i*H1;for(let j=0;j<H1;j++)A.gW[base+j]+=x[i]*dh1[j];}for(let j=0;j<H1;j++)A.gb[j]+=dh1[j];}
+  joy=sign*joy/N;adamStep(net,c.lr);
+  run.pts.push([u+1,mG,ci]);animI=0;
+  $('#s_upd').textContent=(u+1)+' / '+nUpd;$('#s_G').textContent=fmt(mG,1);$('#s_t').textContent=((performance.now()-t0)/1000).toFixed(1);
+  $('#log table').insertAdjacentHTML('beforeend',`<tr><td>${u+1}</td><td>${fmt(mG,1)} ± ${fmt(ci,1)}</td><td>${Math.max(...fe)}</td><td>${fmt(joy,4)}</td></tr>`);$('#log').scrollTop=1e9;
+  drawCurve();drawMap(net);await new Promise(res=>setTimeout(res,10));}
+ $('#status').textContent=stopFlag?'stopped':'done — '+run.label;stopFlag=false;$('#go').disabled=false;$('#stop').disabled=true;}
+function drawCurve(){const ser=[];runs.forEach(rn=>{const live=rn===cur;ser.push({pts:rn.pts.map(p=>[p[0],p[1]]),color:live?rn.color:'#B8C0C6',width:live?3.5:2,label:live?'':rn.label,dots:live});});
+ const maxU=Math.max(10,...runs.map(r=>r.pts.length));const {X,Y}=lineChart($('#curve'),ser,{W:900,H:380,ymin:0,ymax:520,xmin:0,xmax:maxU,yticks:[0,100,200,300,400,500],xlabel:'update',ylabel:'mean first-episode return',hlines:[{y:500,color:C.teal,label:'max 500'}]});
+ if(cur&&cur.pts.length){const svg=$('#curve');const up=cur.pts.map(p=>[X(p[0]),Y(Math.min(520,p[1]+p[2]))]),dn=cur.pts.map(p=>[X(p[0]),Y(Math.max(0,p[1]-p[2]))]).reverse();S('path',{d:'M'+up.concat(dn).map(p=>p.join(' ')).join('L')+'Z',fill:cur.color,opacity:0.15},svg);}}
+function drawMap(net){const cv=$('#pmap'),c=cv.getContext('2d');const h1=new Float32Array(net.L[0].fo),h2=new Float32Array(net.L[1].fo);const nx=40,ny=24,x0=50,y0=10,w=530,h=250;
+ for(let i=0;i<nx;i++)for(let j=0;j<ny;j++){const th=-0.21+0.42*(i+0.5)/nx,thd=1-2*(j+0.5)/ny;const z=forward(net,[0,0,th,thd],h1,h2);const p=sig(z[1]-z[0]);c.fillStyle=p>=0.5?mix('#FFFFFF',C.teal,(p-0.5)*2):mix('#FFFFFF',C.purple,(0.5-p)*2);c.fillRect(x0+i*w/nx,y0+j*h/ny,w/nx+0.5,h/ny+0.5);}
+ c.fillStyle=C.muted;c.font='15px Calibri,Carlito,sans-serif';c.textAlign='center';c.fillText('pole angle θ  (−12° … +12°)',x0+w/2,y0+h+22);c.save();c.translate(18,y0+h/2);c.rotate(-Math.PI/2);c.fillText('θ̇  (−1 … +1)',0,0);c.restore();}
+setInterval(()=>{if(!animFrames.length)return;const f=animFrames[animI%animFrames.length];drawCart($('#anim').getContext('2d'),f.s,{x0:0,y0:0,w:600,h:300},{arrow:f.a,dead:f.d});animI++;},20);
+$('#go').onclick=()=>{$('#go').disabled=true;$('#stop').disabled=false;$('#status').textContent='training…';train();};
+$('#stop').onclick=()=>{stopFlag=true;};
+$('#clear').onclick=()=>{runs=cur?[cur]:[];drawCurve();};
+$('#preset').onclick=()=>{$('#c_env').value='32';$('#c_T').value='500';$('#c_tot').value='640000';$('#c_lr').value='0.02';$('#c_g').value='0.99';$('#c_h').value='120,84';$('#c_seed').value='1337';$('#c_norm').checked=true;$('#c_base').checked=true;$('#c_flip').checked=false;};
+drawCurve();drawMap(makeNet(32,32,rng(1)));
+// ---------- probes (same settings as test_probe in the notebook) ----------
+(()=>{const DESC={4:'<h3>Probe 4</h3><p>One state (obs = 0). Action 1 → +1, action 0 → −1. Expected: π(·|0) = [0, 1].</p><p class="note">num_envs 4 · 16 steps · lr 5e-3 · 2,500 steps · normalize off</p>',5:'<h3>Probe 5</h3><p>Obs is 0 or 1 at random. Reward +1 if the action equals the obs, else −1. Expected: π(·|0) = [1, 0], π(·|1) = [0, 1]. Tests that the policy actually <b>uses its input</b>.</p><p class="note">num_envs 4 · 16 steps · lr 5e-3 · 5,000 steps · normalize off</p>'};
+ function net(r){const sz=[1,120,84,2];return sz.slice(0,3).map((fi,i)=>{const fo=sz[i+1],k=1/Math.sqrt(fi);return {fi,fo,W:Float64Array.from({length:fi*fo},()=>(r()*2-1)*k),b:Float64Array.from({length:fo},()=>(r()*2-1)*k),gW:new Float64Array(fi*fo),gb:new Float64Array(fo),mW:new Float64Array(fi*fo),vW:new Float64Array(fi*fo),mb:new Float64Array(fo),vb:new Float64Array(fo)}});}
+ function fw(L,x){const hs=[x];let h=x;L.forEach((l,i)=>{const o=new Float64Array(l.fo);for(let j=0;j<l.fo;j++){let s=l.b[j];for(let q=0;q<l.fi;q++)s+=h[q]*l.W[q*l.fo+j];o[j]=i<2?Math.max(0,s):s;}hs.push(o);h=o;});return hs;}
+ function probs(L,x){const z=fw(L,[x])[3];const m=Math.max(z[0],z[1]);const e0=Math.exp(z[0]-m),e1=Math.exp(z[1]-m);return [e0/(e0+e1),e1/(e0+e1)]}
+ let t_=0;function adam(L,lr){t_++;const c1=1-0.9**t_,c2=1-0.999**t_;L.forEach(l=>[[l.W,l.gW,l.mW,l.vW],[l.b,l.gb,l.mb,l.vb]].forEach(([p,g,m,v])=>{for(let j=0;j<p.length;j++){m[j]=0.9*m[j]+0.1*g[j];v[j]=0.999*v[j]+0.001*g[j]*g[j];p[j]+=lr*(m[j]/c1)/(Math.sqrt(v[j]/c2)+1e-5);g[j]=0;}}));}
+ async function run(){const pid=+$('#pr_which').value,flip=$('#pr_flip').checked?-1:1;const r=rng(1);const L=net(r);t_=0;const E=4,T=16,tot=pid===4?2500:5000,nU=Math.floor(tot/(E*T));const hist=[];
+  for(let u=0;u<nU;u++){const N=E*T,O=[],A=[],R=[],P=[];for(let k=0;k<N;k++){const o=pid===4?0:(r()<0.5?0:1);const p=probs(L,o);const a=r()<p[1]?1:0;const rew=pid===4?(a===1?1:-1):(a===o?1:-1);O.push(o);A.push(a);R.push(rew);P.push(p);}
+   // returns = rewards (one-step episodes); baseline: mean over envs at each timestep
+   const adv=new Array(N);for(let t=0;t<T;t++){let b=0;for(let e=0;e<E;e++)b+=R[e*T+t];b/=E;for(let e=0;e<E;e++)adv[e*T+t]=R[e*T+t]-b;}
+   for(let k=0;k<N;k++){const hs=fw(L,[O[k]]);const w=flip*adv[k]/N;const d=[w*((A[k]===0?1:0)-P[k][0]),w*((A[k]===1?1:0)-P[k][1])];
+    let dout=d;for(let li=2;li>=0;li--){const l=L[li],hin=hs[li];const din=new Float64Array(l.fi);for(let q=0;q<l.fi;q++){let s=0;for(let j=0;j<l.fo;j++){l.gW[q*l.fo+j]+=hin[q]*dout[j];s+=l.W[q*l.fo+j]*dout[j];}din[q]=(li>0&&hin[q]<=0)?0:s;}for(let j=0;j<l.fo;j++)l.gb[j]+=dout[j];dout=din;}}
+   adam(L,5e-3);hist.push(pid===4?[probs(L,0)[1]]:[probs(L,0)[0],probs(L,1)[1]]);
+   if(u%4===0){draw(pid,hist,nU);await new Promise(x=>setTimeout(x,0));}}
+  draw(pid,hist,nU);
+  const fin=pid===4?[probs(L,0)]:[probs(L,0),probs(L,1)];const exp=pid===4?[[0,1]]:[[1,0],[0,1]];const err=Math.max(...fin.flatMap((p,i)=>p.map((v,j)=>Math.abs(v-exp[i][j]))));
+  const pass=err<=2e-3;$('#pr_res').innerHTML=pass?'<span style="color:var(--teal)">passed</span>':'<span style="color:var(--coral)">failed</span>';$('#pr_res').title='max error '+err.toExponential(1)+' (tolerance 2e-3)';
+  $('#pr_probs').innerHTML=fin.map(p=>'['+p.map(v=>v.toFixed(3)).join(', ')+']').join('<br>');}
+ function draw(pid,hist,nU){const ser=pid===4?[{pts:hist.map(h=>h[0]),color:C.teal,width:3,label:'π(right | 0) → 1'}]:[{pts:hist.map(h=>h[0]),color:C.purple,width:3,label:'π(0 | obs 0) → 1'},{pts:hist.map(h=>h[1]),color:C.teal,width:3,label:'π(1 | obs 1) → 1'}];
+  lineChart($('#pr_chart'),ser,{W:860,H:400,ymin:0,ymax:1,xmin:0,xmax:nU,yticks:[0,0.25,0.5,0.75,1],yd:2,xlabel:'update',ylabel:'probability of the right action',hlines:[{y:1,color:C.teal}]});}
+ $('#pr_which').onchange=()=>{$('#pr_desc').innerHTML=DESC[$('#pr_which').value];$('#pr_res').textContent='—';$('#pr_probs').textContent='—';lineChart($('#pr_chart'),[{pts:[]}],{W:860,H:400,ymin:0,ymax:1});};
+ $('#pr_go').onclick=()=>{$('#pr_go').disabled=true;run().then(()=>$('#pr_go').disabled=false);};$('#pr_which').onchange();})();
+
+})();
+</script><!--presenter-->
+<style>
+.placard.pc>h3{cursor:pointer}
+.placard.pc>h3::after{content:" ▸";font-weight:400;opacity:.45}
+.placard.pc.open>h3::after{content:" ▾"}
+.placard.pc:not(.open)>*:not(h3){display:none}
+.placard.pc:not(.open){padding-bottom:10px}
+.placard.pc:not(.open)>h3{margin:0}
+#pnote{position:fixed;right:14px;bottom:12px;font:12px system-ui,sans-serif;color:#8a90a0;background:#fff;border:1px solid #e3e5ea;border-radius:8px;padding:4px 9px;cursor:pointer;z-index:99}
+</style>
+<script>
+(function(){
+  function setup(){
+    document.querySelectorAll('.placard').forEach(function(p){
+      if(p.classList.contains('pc')||p.id||p.querySelector('[id]')) return;
+      if(p.querySelector('table,canvas,svg,input,select,button,textarea,pre')) return;
+      var h=p.querySelector(':scope>h3'); if(!h) return;
+      var kids=[].slice.call(p.children).filter(function(c){return c!==h});
+      if(!kids.length) return;
+      p.classList.add('pc');
+      h.addEventListener('click',function(){p.classList.toggle('open')});
+    });
+  }
+  var all=false;
+  function toggleAll(){all=!all;document.querySelectorAll('.placard.pc').forEach(function(p){p.classList.toggle('open',all)});}
+  document.addEventListener('keydown',function(e){if((e.key==='n'||e.key==='N')&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){toggleAll();}});
+  window.addEventListener('load',function(){
+    setup();
+    var b=document.createElement('div');b.id='pnote';b.textContent='notes: click a heading · N = all';b.onclick=toggleAll;document.body.appendChild(b);
+    new MutationObserver(setup).observe(document.body,{childList:true,subtree:true});
+  });
+})();
+</script>
+</body></html>

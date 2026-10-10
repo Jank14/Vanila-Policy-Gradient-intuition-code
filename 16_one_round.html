@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One round of learning</title>
+<style>:root{--teal:#0E7C7B;--teal-lt:#DCEEED;--coral:#E4572E;--coral-lt:#FBE4DC;--purple:#6C4AB6;--purple-lt:#EAE3F7;--amber:#B7791F;--amber-lt:#FDF1D6;--blue:#2F6DB5;--blue-lt:#DDE8F6;--ink:#1A1A1A;--muted:#4F5A63;--line:#C9D0D5;--bg:#F2F4F5;--code:#1E1E2E;--grey:#8A949C;--page:#FFFFFF}
+*{box-sizing:border-box}
+html{font-size:20px}
+@media (min-width:1700px){html{font-size:23px}}
+@media (max-width:900px){html{font-size:16px}}
+body{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif;margin:0;background:var(--page);color:var(--ink);line-height:1.35}
+.wrap{max-width:1800px;margin:0 auto;padding:20px 30px 40px}
+.kicker{font-size:.78rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
+h1{font-size:1.9rem;margin:.1em 0 .15em}
+.sub{color:var(--muted);font-size:1.02rem;margin:0 0 .6rem;max-width:80ch}
+.tabs{display:flex;flex-wrap:wrap;gap:10px;margin:.5rem 0 1rem;align-items:center}
+.tabs button{font:inherit;font-size:.95rem;font-weight:700;padding:.45rem .9rem;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.tabs button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+section.tab{display:none}
+section.tab.on{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:24px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.stage{border:2px solid var(--line);border-radius:18px;padding:12px;background:#fff;position:relative}
+.stage canvas,.stage svg{width:100%;height:auto;display:block}
+.side{display:flex;flex-direction:column;gap:14px}
+.placard{border-radius:16px;padding:14px 18px;background:var(--bg);font-size:1.02rem}
+.placard h3{margin:0 0 .3rem;font-size:1.15rem}
+.placard p{margin:.25rem 0}
+.placard.teal{background:var(--teal-lt)}.placard.teal h3{color:var(--teal)}
+.placard.coral{background:var(--coral-lt)}.placard.coral h3{color:var(--coral)}
+.placard.purple{background:var(--purple-lt)}.placard.purple h3{color:var(--purple)}
+.placard.amber{background:var(--amber-lt)}.placard.amber h3{color:var(--amber)}
+.placard.dark{background:var(--code);color:#E4E4EF}.placard.dark h3{color:#fff}
+.ctl{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;font-size:.98rem;margin:10px 0}
+.ctl label{font-weight:700;color:var(--muted)}
+.ctl input[type=range]{width:180px;accent-color:var(--teal)}
+.ctl select{font:inherit;padding:.25rem .4rem;border-radius:8px;border:2px solid var(--line)}
+button.b{font:inherit;font-size:.98rem;font-weight:700;padding:.45rem .95rem;border-radius:12px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+button.b.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+button.b.coral{background:var(--coral);border-color:var(--coral);color:#fff}
+button.b:disabled{opacity:.4;cursor:default}
+.mono,code{font-family:"Courier New","DejaVu Sans Mono",monospace}
+code{background:var(--bg);padding:0 .25em;border-radius:5px}
+.placard.dark code{background:#2C2C40}
+.stat{display:flex;gap:10px;flex-wrap:wrap}
+.stat div{flex:1;min-width:110px;border-radius:14px;padding:8px 12px;background:var(--bg)}
+.stat b{display:block;font-size:1.55rem;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.85rem}
+.note{color:var(--grey);font-size:.85rem;font-style:italic}
+table.t{border-collapse:separate;border-spacing:3px;font-size:.92rem;font-variant-numeric:tabular-nums}
+table.t td,table.t th{padding:4px 8px;border-radius:7px;text-align:center}
+table.t th{color:var(--muted);font-weight:700}
+.chk{display:inline-flex;gap:6px;align-items:center;font-weight:700;color:var(--muted);cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--teal)}
+.keys{position:fixed;right:14px;bottom:10px;font-size:.75rem;color:var(--grey);background:#fff;padding:4px 10px;border-radius:10px;border:1px solid var(--line)}
+svg text{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.9rem;color:var(--muted);margin:6px 2px}
+.legend i{display:inline-block;width:16px;height:16px;border-radius:4px;vertical-align:-3px;margin-right:5px}
+canvas.hm{cursor:crosshair}
+
+.tabs.grouped{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:flex-start}
+.tabs.grouped .grp{display:flex;flex-direction:column;gap:5px}
+.tabs.grouped .grp>span{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tabs.grouped .grp>div{display:flex;gap:6px;flex-wrap:wrap}
+.tabs.grouped button{font-size:.9rem;padding:.4rem .75rem}
+.tabs.grouped button .n{display:inline-block;min-width:1.3em;margin-right:.35em;color:var(--teal);font-variant-numeric:tabular-nums}
+.tabs.grouped button.on .n{color:#fff}
+</style></head><body>
+<div class="wrap">
+<div class="kicker">TARA · RL week 1 · interactive 16 · one round of learning</div>
+<h1>Play, score, nudge, play again</h1>
+<p class="sub">A real CartPole and a tiny policy: π(right | s) = σ(w · s), four weights, starting at 50 / 50. One round = play 8 games, score them, nudge the weights, then play again with the new policy.</p>
+
+<div class="ctl">
+  <button class="b primary" id="b1">1 · ▶ play 8 games</button>
+  <button class="b" id="b2" disabled>2 · score them</button>
+  <button class="b" id="b3" disabled>3 · nudge the policy</button>
+  <button class="b" id="auto">▶▶ 10 rounds</button>
+  <button class="b" id="reset">reset</button>
+  <label>step size</label><input type="range" id="lr" min="0.1" max="1" step="0.1" value="0.3"><span id="lrv" class="mono"></span>
+</div>
+
+<div class="grid">
+  <div class="stage"><svg id="svg" viewBox="0 0 900 470"></svg></div>
+  <div class="side">
+    <div class="placard teal" id="explain"><h3>Round 1</h3><p>Click <b>1 · play 8 games</b>. Each strip is one game: one cell per step, <b style="color:#0E7C7B">teal = pushed right</b>, <b style="color:#8A949C">grey = pushed left</b>. Its length is the return G.</p></div>
+    <div class="placard">
+      <h3>The policy in two test states</h3>
+      <svg id="probe" viewBox="0 0 420 170"></svg>
+    </div>
+    <div class="placard amber"><h3>What to notice</h3><p>Nobody tells the agent which push was right. It only sees which <b>games</b> went long. Pushes from long games get more likely, pushes from short games less likely, and the next 8 games get longer.</p></div>
+  </div>
+</div>
+<div class="stage" style="margin-top:14px"><svg id="hist" viewBox="0 0 900 170"></svg></div>
+</div>
+<style>.mono{font-family:Consolas,monospace}.b[disabled]{opacity:.4;cursor:default}</style>
+<script>
+(function(){
+const $=s=>document.querySelector(s);const NS='http://www.w3.org/2000/svg';
+function el(svg,t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);svg.appendChild(e);return e;}
+function tx(svg,x,y,s,a){const e=el(svg,'text',Object.assign({x,y,'font-size':16,fill:'#4F5A63','font-family':'Calibri,Carlito,Arial'},a||{}));e.textContent=s;return e;}
+const C={teal:'#0E7C7B',tealLt:'#DCEEED',coral:'#E4572E',coralLt:'#FBE4DC',grey:'#8A949C',line:'#C9D0D5',amber:'#B7791F',ink:'#1A1A1A',purple:'#6C4AB6'};
+function step(s,a){let [x,xd,th,thd]=s;const g=9.8,tm=1.1,l=0.5,pml=0.05,mp=0.1,f=a?10:-10,tau=0.02;
+ const ct=Math.cos(th),st=Math.sin(th);const temp=(f+pml*thd*thd*st)/tm;const tha=(g*st-ct*temp)/(l*(4/3-mp*ct*ct/tm));const xa=temp-pml*tha*ct/tm;
+ x+=tau*xd;xd+=tau*xa;th+=tau*thd;thd+=tau*tha;return [[x,xd,th,thd],x<-2.4||x>2.4||th<-0.2095||th>0.2095];}
+const sig=z=>1/(1+Math.exp(-z));const F=s=>[s[0]/2.4,s[1]/2,s[2]/0.21,s[3]/2];
+const pr=(w,s)=>{const f=F(s);return sig(w[0]*f[0]+w[1]*f[1]+w[2]*f[2]+w[3]*f[3]);};
+function play(w){let s=[0,0,0,0].map(()=>(Math.random()-0.5)*0.1);const tr=[];for(let t=0;t<500;t++){const p=pr(w,s);const a=Math.random()<p?1:0;tr.push([s,a,p]);const [n,d]=step(s,a);s=n;if(d)break;}return tr;}
+const PROBES=[['pole leaning right, falling right',[0,0,0.1,0.5]],['pole leaning left, falling left',[0,0,-0.1,-0.5]]];
+let w,games,phase,round,history,prevProbe;
+function reset(){w=[0,0,0,0];games=null;phase=0;round=1;history=[];prevProbe=null;draw();drawProbe();drawHist();btns();
+ $('#explain').innerHTML='<h3>Round 1</h3><p>Click <b>1 · play 8 games</b>. Each strip is one game: one cell per step, <b style="color:#0E7C7B">teal = pushed right</b>, <b style="color:#8A949C">grey = pushed left</b>. Its length is the return G.</p>';}
+function btns(){$('#b1').disabled=phase!==0;$('#b2').disabled=phase!==1;$('#b3').disabled=phase!==2;
+ ['#b1','#b2','#b3'].forEach((id,i)=>$(id).classList.toggle('primary',phase===i));}
+const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+function draw(){const svg=$('#svg');svg.innerHTML='';
+ if(!games){tx(svg,450,235,'No games yet: press 1 · play 8 games',{'text-anchor':'middle','font-size':20});return;}
+ const G=games.map(g=>g.length),m=mean(G),mx=Math.max(120,...G),x0=120,W=640,sc=W/mx;
+ tx(svg,x0,22,'round '+round+' · 8 games with the current policy · length = return G',{'font-size':15});
+ games.forEach((g,k)=>{const y=40+k*50;const good=phase>=2?(G[k]>=m):null;
+  if(good!==null)el(svg,'rect',{x:4,y:y-6,width:892,height:44,rx:8,fill:good?C.tealLt:C.coralLt});
+  tx(svg,10,y+22,'game '+(k+1),{'font-weight':700,fill:C.ink});
+  // segments
+  let start=0;for(let t=1;t<=g.length;t++){if(t===g.length||g[t][1]!==g[start][1]){el(svg,'rect',{x:x0+start*sc,y:y+4,width:Math.max(0.6,(t-start)*sc-0.3),height:24,fill:g[start][1]?C.teal:C.grey});start=t;}}
+  tx(svg,x0+g.length*sc+8,y+22,'G = '+g.length,{'font-weight':700,fill:C.amber});
+  if(phase>=2)tx(svg,890,y+22,(good?'↑ more likely':'↓ less likely'),{'text-anchor':'end','font-weight':700,fill:good?C.teal:C.coral});
+ });
+ if(phase>=2){const xm=x0+m*sc;el(svg,'line',{x1:xm,y1:32,x2:xm,y2:440,stroke:C.purple,'stroke-width':3,'stroke-dasharray':'6 5'});tx(svg,xm,460,'average G = '+m.toFixed(0),{'text-anchor':'middle','font-weight':700,fill:C.purple});}
+}
+function drawProbe(){const svg=$('#probe');svg.innerHTML='';
+ PROBES.forEach(([lab,s],i)=>{const y=10+i*80,p=pr(w,s);tx(svg,0,y+14,lab,{'font-size':15,'font-weight':700,fill:C.ink});
+  el(svg,'rect',{x:0,y:y+24,width:220,height:26,rx:6,fill:'#F2F4F5'});
+  if(prevProbe){el(svg,'rect',{x:0,y:y+24,width:220*prevProbe[i],height:26,rx:6,fill:C.line});}
+  el(svg,'rect',{x:0,y:y+24,width:220*p,height:26,rx:6,fill:C.teal,opacity:0.85});
+  tx(svg,232,y+43,'π(right) = '+p.toFixed(2)+(prevProbe?'  (was '+prevProbe[i].toFixed(2)+')':''),{'font-size':14});});}
+function drawHist(){const svg=$('#hist');svg.innerHTML='';const x0=60,W=820,H=120,y0=20;
+ el(svg,'line',{x1:x0,y1:y0+H,x2:x0+W,y2:y0+H,stroke:C.line,'stroke-width':2});
+ tx(svg,x0-8,y0+8,'500',{'text-anchor':'end','font-size':13});tx(svg,x0-8,y0+H,'0',{'text-anchor':'end','font-size':13});
+ tx(svg,x0+W,y0+H+22,'rounds →',{'text-anchor':'end','font-size':14});tx(svg,x0,y0+H+22,'average G per round (= our estimate of J)',{'font-size':14,fill:C.purple,'font-weight':700});
+ const n=Math.max(20,history.length),bw=W/n;history.forEach((g,i)=>{const h=H*g/500;el(svg,'rect',{x:x0+i*bw+2,y:y0+H-h,width:bw-4,height:h,fill:C.purple,rx:3});});}
+function doPlay(){games=[];for(let k=0;k<8;k++)games.push(play(w));phase=1;draw();btns();
+ $('#explain').innerHTML='<h3>1 · Play</h3><p>Same policy, 8 different games: the policy <b>rolls its dice</b> at every step. These games are our whole dataset. Nobody labelled any push as right or wrong.</p>';}
+function doScore(){phase=2;const G=games.map(g=>g.length);const m=mean(G);draw();btns();
+ $('#explain').innerHTML='<h3>2 · Score</h3><p>The average return this round is <b>'+m.toFixed(0)+'</b>. That is our estimate of J(θ). Games above average are <b style="color:#0E7C7B">teal</b>, below average <b style="color:#E4572E">coral</b>.</p>';}
+function doNudge(quiet){const G=games.map(g=>g.length),m=mean(G),sd=Math.sqrt(mean(G.map(g=>(g-m)**2)))+1e-8,lr=+$('#lr').value;
+ prevProbe=PROBES.map(([,s])=>pr(w,s));const gw=[0,0,0,0];
+ games.forEach((g,k)=>{const A=(G[k]-m)/sd;g.forEach(([s,a,p])=>{const f=F(s),c=(a-p)*A;for(let i=0;i<4;i++)gw[i]+=c*f[i];});});
+ for(let i=0;i<4;i++)w[i]+=lr*gw[i]/8;history.push(m);round++;games=null;phase=0;
+ if(!quiet){draw();drawProbe();drawHist();btns();
+ $('#explain').innerHTML='<h3>3 · Nudge</h3><p>Every push in a <b style="color:#0E7C7B">long</b> game became a little more likely in that state; every push in a <b style="color:#E4572E">short</b> game a little less. See the two test states on the right. Now press <b>1 · play</b> again: same rules, new policy.</p>';}}
+$('#b1').onclick=doPlay;$('#b2').onclick=doScore;$('#b3').onclick=()=>doNudge(false);
+$('#auto').onclick=()=>{for(let r=0;r<10;r++){games=[];for(let k=0;k<8;k++)games.push(play(w));doNudge(true);}doPlay();drawProbe();drawHist();
+ $('#explain').innerHTML='<h3>10 more rounds</h3><p>Average G per round is in the purple chart below. These are the 8 games of round '+round+'. The same three steps, repeated, are all of VPG.</p>';};
+$('#reset').onclick=reset;$('#lr').oninput=()=>$('#lrv').textContent=$('#lr').value;$('#lrv').textContent=$('#lr').value;
+reset();
+})();
+</script>
+
+<!--presenter-->
+<style>
+.placard.pc>h3{cursor:pointer}
+.placard.pc>h3::after{content:" ▸";font-weight:400;opacity:.45}
+.placard.pc.open>h3::after{content:" ▾"}
+.placard.pc:not(.open)>*:not(h3){display:none}
+.placard.pc:not(.open){padding-bottom:10px}
+.placard.pc:not(.open)>h3{margin:0}
+#pnote{position:fixed;right:14px;bottom:12px;font:12px system-ui,sans-serif;color:#8a90a0;background:#fff;border:1px solid #e3e5ea;border-radius:8px;padding:4px 9px;cursor:pointer;z-index:99}
+</style>
+<script>
+(function(){
+  function setup(){
+    document.querySelectorAll('.placard').forEach(function(p){
+      if(p.classList.contains('pc')||p.id||p.querySelector('[id]')) return;
+      if(p.querySelector('table,canvas,svg,input,select,button,textarea,pre')) return;
+      var h=p.querySelector(':scope>h3'); if(!h) return;
+      var kids=[].slice.call(p.children).filter(function(c){return c!==h});
+      if(!kids.length) return;
+      p.classList.add('pc');
+      h.addEventListener('click',function(){p.classList.toggle('open')});
+    });
+  }
+  var all=false;
+  function toggleAll(){all=!all;document.querySelectorAll('.placard.pc').forEach(function(p){p.classList.toggle('open',all)});}
+  document.addEventListener('keydown',function(e){if((e.key==='n'||e.key==='N')&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){toggleAll();}});
+  window.addEventListener('load',function(){
+    setup();
+    var b=document.createElement('div');b.id='pnote';b.textContent='notes: click a heading · N = all';b.onclick=toggleAll;document.body.appendChild(b);
+    new MutationObserver(setup).observe(document.body,{childList:true,subtree:true});
+  });
+})();
+</script>
+</body></html>

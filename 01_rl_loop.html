@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RL Loop — TARA RL</title>
+<style>:root{--teal:#0E7C7B;--teal-lt:#DCEEED;--coral:#E4572E;--coral-lt:#FBE4DC;--purple:#6C4AB6;--purple-lt:#EAE3F7;--amber:#B7791F;--amber-lt:#FDF1D6;--blue:#2F6DB5;--blue-lt:#DDE8F6;--ink:#1A1A1A;--muted:#4F5A63;--line:#C9D0D5;--bg:#F2F4F5;--code:#1E1E2E;--grey:#8A949C;--page:#FFFFFF}
+*{box-sizing:border-box}
+html{font-size:20px}
+@media (min-width:1700px){html{font-size:23px}}
+@media (max-width:900px){html{font-size:16px}}
+body{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif;margin:0;background:var(--page);color:var(--ink);line-height:1.35}
+.wrap{max-width:1800px;margin:0 auto;padding:20px 30px 40px}
+.kicker{font-size:.78rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
+h1{font-size:1.9rem;margin:.1em 0 .15em}
+.sub{color:var(--muted);font-size:1.02rem;margin:0 0 .6rem;max-width:80ch}
+.tabs{display:flex;flex-wrap:wrap;gap:10px;margin:.5rem 0 1rem;align-items:center}
+.tabs button{font:inherit;font-size:.95rem;font-weight:700;padding:.45rem .9rem;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.tabs button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+section.tab{display:none}
+section.tab.on{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:24px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.stage{border:2px solid var(--line);border-radius:18px;padding:12px;background:#fff;position:relative}
+.stage canvas,.stage svg{width:100%;height:auto;display:block}
+.side{display:flex;flex-direction:column;gap:14px}
+.placard{border-radius:16px;padding:14px 18px;background:var(--bg);font-size:1.02rem}
+.placard h3{margin:0 0 .3rem;font-size:1.15rem}
+.placard p{margin:.25rem 0}
+.placard.teal{background:var(--teal-lt)}.placard.teal h3{color:var(--teal)}
+.placard.coral{background:var(--coral-lt)}.placard.coral h3{color:var(--coral)}
+.placard.purple{background:var(--purple-lt)}.placard.purple h3{color:var(--purple)}
+.placard.amber{background:var(--amber-lt)}.placard.amber h3{color:var(--amber)}
+.placard.dark{background:var(--code);color:#E4E4EF}.placard.dark h3{color:#fff}
+.ctl{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;font-size:.98rem;margin:10px 0}
+.ctl label{font-weight:700;color:var(--muted)}
+.ctl input[type=range]{width:180px;accent-color:var(--teal)}
+.ctl select{font:inherit;padding:.25rem .4rem;border-radius:8px;border:2px solid var(--line)}
+button.b{font:inherit;font-size:.98rem;font-weight:700;padding:.45rem .95rem;border-radius:12px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+button.b.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+button.b.coral{background:var(--coral);border-color:var(--coral);color:#fff}
+button.b:disabled{opacity:.4;cursor:default}
+.mono,code{font-family:"Courier New","DejaVu Sans Mono",monospace}
+code{background:var(--bg);padding:0 .25em;border-radius:5px}
+.placard.dark code{background:#2C2C40}
+.stat{display:flex;gap:10px;flex-wrap:wrap}
+.stat div{flex:1;min-width:110px;border-radius:14px;padding:8px 12px;background:var(--bg)}
+.stat b{display:block;font-size:1.55rem;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.85rem}
+.note{color:var(--grey);font-size:.85rem;font-style:italic}
+table.t{border-collapse:separate;border-spacing:3px;font-size:.92rem;font-variant-numeric:tabular-nums}
+table.t td,table.t th{padding:4px 8px;border-radius:7px;text-align:center}
+table.t th{color:var(--muted);font-weight:700}
+.chk{display:inline-flex;gap:6px;align-items:center;font-weight:700;color:var(--muted);cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--teal)}
+.keys{position:fixed;right:14px;bottom:10px;font-size:.75rem;color:var(--grey);background:#fff;padding:4px 10px;border-radius:10px;border:1px solid var(--line)}
+svg text{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem}
+
+.worlds{display:flex;gap:10px;flex-wrap:wrap;margin:.4rem 0 1rem}
+.worlds button{font:inherit;font-weight:700;padding:.5rem 1rem;border-radius:12px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+.worlds button.on{background:var(--navy,#20202F);border-color:#20202F;color:#fff}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;align-items:center;font-size:1rem}
+.kv .k{font-weight:700;color:var(--muted)}
+.kv .v{background:var(--bg);border-radius:10px;padding:6px 10px;font-variant-numeric:tabular-nums;min-width:0;overflow-wrap:anywhere}
+.stamp{display:inline-block;font-weight:700;padding:4px 12px;border-radius:999px;font-size:.95rem}
+#w_tape{max-height:200px;overflow:auto}
+#w_tape td{background:var(--bg)}
+.chattext{font-family:"Courier New",monospace;font-size:1.05rem;line-height:1.6}
+.chattext .tok{display:inline-block;padding:1px 6px;margin:2px 2px;border-radius:6px;background:var(--teal-lt)}
+.chattext .tok.new{background:var(--amber);color:#fff}
+
+.tabs.grouped{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:flex-start}
+.tabs.grouped .grp{display:flex;flex-direction:column;gap:5px}
+.tabs.grouped .grp>span{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tabs.grouped .grp>div{display:flex;gap:6px;flex-wrap:wrap}
+.tabs.grouped button{font-size:.9rem;padding:.4rem .75rem}
+.tabs.grouped button .n{display:inline-block;min-width:1.3em;margin-right:.35em;color:var(--teal);font-variant-numeric:tabular-nums}
+.tabs.grouped button.on .n{color:#fff}
+</style></head><body><div class="wrap">
+<div class="kicker">TARA · RL week 1 · interactive 01</div>
+<h1>Same loop, many worlds</h1>
+<p class="sub">Every RL problem is the same loop: see a state, sample an action from π(a|s), get a reward and the next state, until the episode ends.</p>
+<div class="tabs grouped" style="display:none"><div class="grp"><span>Worlds</span><div><button data-tab="world" class="on"><span class="n">1</span>Same loop, many worlds</button></div></div></div>
+<section class="tab on" id="world">
+<div class="worlds" id="worlds"></div>
+<div class="grid">
+ <div>
+  <div class="stage"><canvas id="w_cv" width="900" height="400"></canvas></div>
+  <div class="stage" style="margin-top:10px"><svg id="w_loop"></svg></div>
+  <div class="ctl"><button class="b primary" id="w_step">step ▶</button><button class="b" id="w_play">▶ play</button><button class="b" id="w_ff">+20 steps</button><button class="b" id="w_reset">new episode</button><label>speed</label><select id="w_speed"><option value="900">slow (show each phase)</option><option value="250" selected>normal</option><option value="40">fast</option></select></div>
+ </div>
+ <div class="side">
+  <div class="kv">
+   <div class="k">t</div><div class="v mono" id="v_t">0</div>
+   <div class="k">state s<sub>t</sub></div><div class="v" id="v_s"></div>
+   <div class="k">π(a | s<sub>t</sub>)</div><div class="v"><svg id="w_pol" style="width:100%;height:auto"></svg></div>
+   <div class="k">action a<sub>t</sub></div><div class="v" id="v_a">—</div>
+   <div class="k">reward r<sub>t</sub></div><div class="v" id="v_r">—</div>
+   <div class="k">return so far</div><div class="v mono" id="v_G">0</div>
+   <div class="k">status</div><div class="v" id="v_st"></div>
+  </div>
+  <div class="placard" id="w_about"></div>
+  <div id="w_tape"></div>
+ </div>
+</div></section>
+</div>
+<script>// ---------- shared helpers for the TARA RL labs ----------
+const C = {teal:'#0E7C7B',tealLt:'#DCEEED',coral:'#E4572E',coralLt:'#FBE4DC',purple:'#6C4AB6',purpleLt:'#EAE3F7',
+  amber:'#B7791F',amberLt:'#FDF1D6',blue:'#2F6DB5',blueLt:'#DDE8F6',ink:'#1A1A1A',muted:'#4F5A63',line:'#C9D0D5',bg:'#F2F4F5',grey:'#8A949C',navy:'#20202F'};
+const NS='http://www.w3.org/2000/svg';
+function S(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs||{})e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function T(parent,x,y,txt,o){o=o||{};const e=S('text',{x,y,'font-size':o.size||16,fill:o.color||C.ink,'font-weight':o.bold?700:400,'text-anchor':o.anchor||'start','dominant-baseline':o.base||'middle'},parent);if(o.mono)e.setAttribute('font-family','Courier New, monospace');if(o.italic)e.setAttribute('font-style','italic');e.textContent=txt;return e;}
+function $(q){return document.querySelector(q)}
+function $$(q){return [...document.querySelectorAll(q)]}
+function fmt(v,d=2){if(!isFinite(v))return '—';const s=v.toFixed(d);return (/^-0\.?0*$/.test(s))?s.slice(1):s.replace('-','−')}
+function sig(z){return 1/(1+Math.exp(-z))}
+function rng(seed){let s=(seed>>>0)||1;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+function gauss(r){let u=0,v=0;while(u===0)u=r();v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function softmax(z){const m=Math.max(...z);const e=z.map(v=>Math.exp(v-m));const s=e.reduce((a,b)=>a+b,0);return e.map(v=>v/s)}
+function mix(a,b,t){const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16);const r=[16,8,0].map(s=>Math.round(((pa>>s)&255)*(1-t)+((pb>>s)&255)*t));return '#'+r.map(v=>v.toString(16).padStart(2,'0')).join('')}
+function mean(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:NaN}
+function std(a){const m=mean(a);return Math.sqrt(mean(a.map(v=>(v-m)*(v-m))))}
+// tabs
+function showTab(id){const b=document.querySelector('.tabs button[data-tab="'+id+'"]');if(!b)return false;$$('.tabs button[data-tab]').forEach(x=>x.classList.toggle('on',x===b));$$('section.tab').forEach(s=>s.classList.toggle('on',s.id===id));window.dispatchEvent(new CustomEvent('tab',{detail:id}));return true;}
+function initTabs(){$$('.tabs button[data-tab]').forEach(b=>b.onclick=()=>{showTab(b.dataset.tab);try{history.replaceState(null,'','#'+b.dataset.tab)}catch(e){}});
+ const h=()=>{const id=(location.hash||'').slice(1);if(id)showTab(id)};window.addEventListener('hashchange',h);setTimeout(h,0);}
+// ---------- CartPole (exact gym dynamics) ----------
+const CP={g:9.8,mc:1.0,mp:0.1,len:0.5,force:10,tau:0.02,thMax:12*2*Math.PI/360,xMax:2.4};
+CP.tm=CP.mc+CP.mp;CP.pml=CP.mp*CP.len;
+function cpReset(r){return [0,0,0,0].map(()=>(r()*0.1-0.05))}
+function cpStep(s,a){let [x,xd,th,thd]=s;const f=a===1?CP.force:-CP.force;const c=Math.cos(th),sn=Math.sin(th);
+  const tmp=(f+CP.pml*thd*thd*sn)/CP.tm;const tha=(CP.g*sn-c*tmp)/(CP.len*(4/3-CP.mp*c*c/CP.tm));const xa=tmp-CP.pml*tha*c/CP.tm;
+  x+=CP.tau*xd;xd+=CP.tau*xa;th+=CP.tau*thd;thd+=CP.tau*tha;const ns=[x,xd,th,thd];
+  const term=x<-CP.xMax||x>CP.xMax||th<-CP.thMax||th>CP.thMax;return {s:ns,term};}
+// draw cartpole on canvas ctx in box (x0,y0,w,h)
+function drawCart(ctx,s,box,o){o=o||{};const {x0,y0,w,h}=box;const sc=w/(2*CP.xMax*1.2);const gy=y0+h*0.82;const cx=x0+w/2+s[0]*sc;
+  ctx.save();ctx.fillStyle=o.bg||'#fff';ctx.fillRect(x0,y0,w,h);
+  ctx.strokeStyle=C.line;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x0+4,gy);ctx.lineTo(x0+w-4,gy);ctx.stroke();
+  [-CP.xMax,CP.xMax].forEach(lim=>{const lx=x0+w/2+lim*sc;ctx.strokeStyle=C.coral;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(lx,gy-h*0.6);ctx.lineTo(lx,gy+6);ctx.stroke();ctx.setLineDash([]);});
+  const cw=Math.max(26,w*0.11),ch=cw*0.45;ctx.fillStyle=o.dead?C.coral:C.navy;ctx.beginPath();ctx.roundRect?ctx.roundRect(cx-cw/2,gy-ch-6,cw,ch,4):ctx.rect(cx-cw/2,gy-ch-6,cw,ch);ctx.fill();
+  ctx.fillStyle=C.grey;[cx-cw*0.3,cx+cw*0.3].forEach(wx=>{ctx.beginPath();ctx.arc(wx,gy-4,cw*0.08,0,7);ctx.fill();});
+  const L=h*0.55,px=cx,py=gy-ch-6;ctx.strokeStyle=o.pole||C.amber;ctx.lineWidth=Math.max(4,w*0.014);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px+L*Math.sin(s[2]),py-L*Math.cos(s[2]));ctx.stroke();
+  ctx.fillStyle='#fff';ctx.strokeStyle=C.navy;ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py,4,0,7);ctx.fill();ctx.stroke();
+  if(o.arrow!=null){ctx.strokeStyle=C.teal;ctx.fillStyle=C.teal;ctx.lineWidth=3;const d=o.arrow===1?1:-1;const ax=cx+d*(cw/2+6),ay=gy-ch/2-6;ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax+d*22,ay);ctx.stroke();ctx.beginPath();ctx.moveTo(ax+d*30,ay);ctx.lineTo(ax+d*20,ay-6);ctx.lineTo(ax+d*20,ay+6);ctx.fill();}
+  ctx.restore();}
+// simple line chart into an <svg>: series=[{pts:[y...] or [[x,y]], color, width, dash, label}]
+function lineChart(svg,series,o){o=o||{};svg.innerHTML='';const W=o.W||600,H=o.H||300;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const m={l:o.ml||52,r:16,t:16,b:o.mb||38};const all=series.flatMap(s=>s.pts.map((p,i)=>Array.isArray(p)?p:[i,p]));
+  let xmin=o.xmin??Math.min(...all.map(p=>p[0])),xmax=o.xmax??Math.max(...all.map(p=>p[0])),ymin=o.ymin??Math.min(...all.map(p=>p[1])),ymax=o.ymax??Math.max(...all.map(p=>p[1]));
+  if(!isFinite(xmin)){xmin=0;xmax=1;ymin=0;ymax=1}if(xmax===xmin)xmax=xmin+1;if(ymax===ymin)ymax=ymin+1;
+  const X=v=>m.l+(v-xmin)/(xmax-xmin)*(W-m.l-m.r),Y=v=>H-m.b-(v-ymin)/(ymax-ymin)*(H-m.t-m.b);
+  const ticks=o.yticks||[ymin,(ymin+ymax)/2,ymax];ticks.forEach(t=>{S('line',{x1:m.l,x2:W-m.r,y1:Y(t),y2:Y(t),stroke:'#E3E7EA'},svg);T(svg,m.l-6,Y(t),o.yfmt?o.yfmt(t):fmt(t,o.yd??0),{anchor:'end',size:13,color:C.muted});});
+  S('line',{x1:m.l,x2:W-m.r,y1:H-m.b,y2:H-m.b,stroke:C.line},svg);
+  if(o.xlabel)T(svg,(m.l+W-m.r)/2,H-10,o.xlabel,{anchor:'middle',size:13,color:C.muted});
+  if(o.ylabel){const t=T(svg,14,(m.t+H-m.b)/2,o.ylabel,{anchor:'middle',size:13,color:C.muted});t.setAttribute('transform',`rotate(-90 14 ${(m.t+H-m.b)/2})`);}
+  (o.hlines||[]).forEach(h=>{S('line',{x1:m.l,x2:W-m.r,y1:Y(h.y),y2:Y(h.y),stroke:h.color||C.grey,'stroke-dasharray':'5 4','stroke-width':1.5},svg);if(h.label)T(svg,W-m.r-4,Y(h.y)-9,h.label,{anchor:'end',size:12,color:h.color||C.grey,bold:true});});
+  series.forEach(s=>{const pts=s.pts.map((p,i)=>Array.isArray(p)?p:[i,p]).filter(p=>isFinite(p[1]));if(!pts.length)return;
+    S('path',{d:pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(''),fill:'none',stroke:s.color||C.teal,'stroke-width':s.width||2.5,'stroke-dasharray':s.dash||'','stroke-linejoin':'round',opacity:s.opacity??1},svg);
+    if(s.dots)pts.forEach(p=>S('circle',{cx:X(p[0]),cy:Y(p[1]),r:3,fill:s.color||C.teal},svg));
+    if(s.label){const p=pts[pts.length-1];T(svg,Math.min(X(p[0])+4,W-m.r-2),Y(p[1]),s.label,{size:12,color:s.color,bold:true,anchor:X(p[0])>W-90?'end':'start'});}});
+  return {X,Y};}
+function histo(svg,vals,o){o=o||{};svg.innerHTML='';const W=o.W||600,H=o.H||260;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const m={l:40,r:14,t:14,b:36};const lo=o.lo??Math.min(...vals),hi=o.hi??Math.max(...vals);const nb=o.bins||20;const bw=(hi-lo)/nb||1;const cnt=new Array(nb).fill(0);
+  vals.forEach(v=>{let k=Math.floor((v-lo)/bw);k=Math.max(0,Math.min(nb-1,k));cnt[k]++;});const mx=Math.max(1,...cnt);
+  const X=v=>m.l+(v-lo)/(hi-lo||1)*(W-m.l-m.r),Y=c=>H-m.b-c/mx*(H-m.t-m.b);
+  cnt.forEach((c,i)=>S('rect',{x:X(lo+i*bw)+1,y:Y(c),width:Math.max(1,X(lo+bw)-X(lo)-2),height:H-m.b-Y(c),fill:o.color||C.amber,rx:2},svg));
+  S('line',{x1:m.l,x2:W-m.r,y1:H-m.b,y2:H-m.b,stroke:C.line},svg);
+  T(svg,m.l,H-14,fmt(lo,o.d??0),{size:13,color:C.muted});T(svg,W-m.r,H-14,fmt(hi,o.d??0),{size:13,color:C.muted,anchor:'end'});
+  if(o.xlabel)T(svg,(W)/2,H-14,o.xlabel,{size:13,color:C.muted,anchor:'middle'});
+  (o.marks||[]).forEach(mk=>{S('line',{x1:X(mk.v),x2:X(mk.v),y1:m.t,y2:H-m.b,stroke:mk.color,'stroke-width':3},svg);const nr=X(mk.v)>W-140;T(svg,X(mk.v)+(nr?-6:5),m.t+10+(mk.dy||0),mk.label,{size:13,color:mk.color,bold:true,anchor:nr?'end':'start'});});
+  return {X};}
+
+initTabs();
+
+// ===== world_switcher.src.html =====
+(()=>{
+
+
+const r=rng(Date.now()%100000);
+// ---------------- worlds ----------------
+const W={};
+// CartPole
+W.cart={name:'CartPole',max:500,
+ about:'<h3>CartPole</h3><p>State: 4 numbers. Actions: a short list (2). Reward: +1 every step. Transitions: deterministic physics. Ends: pole falls (<b>terminated</b>) or 500 steps (<b>truncated</b>).</p><p>This is the notebook\'s world.</p>',
+ reset(){return cpReset(r)},
+ policy(s){const p=sig(5*s[2]+1*s[3]);return {labels:['left','right'],probs:[1-p,p]}},
+ step(s,a){const o=cpStep(s,a);return {s:o.s,r:1,term:o.term}},
+ showS(s){return `<span class="mono">[${s.map(v=>fmt(v,3)).join(', ')}]</span><br><span class="note">x, ẋ, θ, θ̇</span>`},
+ showA(a){return ['← push left','push right →'][a]},
+ draw(c,s,a,d){drawCart(c,s,{x0:0,y0:0,w:900,h:400},{arrow:a,dead:d})}};
+// Icy grid
+const GW=5,GH=4,START=[0,3],GOAL=[4,0],LAVA=[[3,1],[3,2]],WALL=[[1,1]],DIRS=[[0,-1],[1,0],[0,1],[-1,0]],AN=['↑','→','↓','←'];
+const isIn=(A,p)=>A.some(q=>q[0]===p[0]&&q[1]===p[1]);
+W.grid={name:'Icy grid',max:25,
+ about:'<h3>Icy grid</h3><p>State: which square. Actions: 4 directions. Reward: −1 per step, +10 goal, −10 lava. Transitions: <b>random</b> — 20% of the time you slip sideways. Ends: goal or lava (<b>terminated</b>) or 25 steps (<b>truncated</b>).</p>',
+ reset(){return {p:START.slice(),slip:null}},
+ policy(){return {labels:AN,probs:[0.35,0.35,0.15,0.15]}},
+ step(s,a){let d=a,sl=false;const u=r();if(u<0.2){sl=true;d=u<0.1?(a+1)%4:(a+3)%4}let n=[s.p[0]+DIRS[d][0],s.p[1]+DIRS[d][1]];if(n[0]<0||n[0]>=GW||n[1]<0||n[1]>=GH||isIn(WALL,n))n=s.p.slice();
+  let rew=-1,term=false;if(n[0]===GOAL[0]&&n[1]===GOAL[1]){rew=10;term=true}else if(isIn(LAVA,n)){rew=-10;term=true}return {s:{p:n,slip:sl?AN[d]:null},r:rew,term}},
+ showS(s){return `square (${s.p[0]}, ${s.p[1]})`+(s.slip?` <span class="pill" style="background:var(--coral-lt);color:var(--coral)">slipped ${s.slip}</span>`:'')},
+ showA(a){return AN[a]+' '+['up','right','down','left'][a]},
+ draw(c,s){c.clearRect(0,0,900,400);const cs=90,ox=225,oy=20;c.font='bold 20px Calibri,Carlito,sans-serif';c.textAlign='center';c.textBaseline='middle';
+  for(let x=0;x<GW;x++)for(let y=0;y<GH;y++){let f='#F2F4F5',t='';if(isIn(WALL,[x,y]))f='#4F5A63';else if(isIn(LAVA,[x,y])){f=C.coral;t='−10'}else if(x===GOAL[0]&&y===GOAL[1]){f=C.teal;t='+10'}
+   c.fillStyle=f;c.fillRect(ox+x*cs+3,oy+y*cs+3,cs-6,cs-6);c.fillStyle='#fff';c.fillText(t,ox+x*cs+cs/2,oy+y*cs+cs/2);}
+  c.fillStyle=C.navy;c.beginPath();c.arc(ox+s.p[0]*cs+cs/2,oy+s.p[1]*cs+cs/2,22,0,7);c.fill();}};
+// Chat model
+const BIG={'<s>':{'The':.5,'It':.2,'Paris':.15,'London':.1,'I':.05},'The':{'capital':.6,'answer':.3,'city':.1},'capital':{'is':.9,'was':.1},'answer':{'is':1},'city':{'is':1},
+ 'is':{'Paris':.6,'London':.2,'probably':.2},'was':{'Paris':.6,'London':.4},'probably':{'Paris':.6,'London':.4},'It':{'is':1},'I':{'think':1},'think':{'it':1},'it':{'is':1},
+ 'Paris':{'.':.6,'!':.2,',':.2},'London':{'.':.6,'!':.2,',':.2},',':{'I':.5,'probably':.5},'.':{'<eos>':.7,'The':.3},'!':{'<eos>':.7,'The':.3}};
+function rewardModel(toks,trunc){let s=0;if(toks.includes('Paris'))s+=2;if(toks.includes('London'))s-=2;const last=toks.filter(t=>t!=='<eos>').slice(-1)[0];if(last==='.'||last==='!')s+=0.5;if(trunc)s-=1;return s}
+W.chat={name:'Chat model (RLHF)',max:10,
+ about:'<h3>Chat model — what RLHF trains</h3><p>State: the prompt + every token written so far. Action: the next token (here a tiny vocabulary; real models ~50,000). Transition: <b>deterministic</b> — just append the token. Reward: <b>0 until the end</b>, then a reward model scores the whole answer. Ends: the model writes <code>&lt;eos&gt;</code> (<b>terminated</b>) or hits the length limit (<b>truncated</b>).</p>',
+ reset(){return {toks:[],last:null}},
+ policy(s){const prev=s.toks.length?s.toks[s.toks.length-1]:'<s>';const d=BIG[prev]||{'<eos>':1};const e=Object.entries(d).sort((a,b)=>b[1]-a[1]);return {labels:e.map(x=>x[0]),probs:e.map(x=>x[1])}},
+ step(s,a,pol,t){const tok=pol.labels[a];const toks=s.toks.concat([tok]);const term=tok==='<eos>';const trunc=!term&&toks.length>=10;return {s:{toks,last:tok},r:(term||trunc)?rewardModel(toks,trunc):0,term}},
+ showS(s){return `<div class="chattext"><b>Q:</b> What is the capital of France?<br><b>A:</b> ${s.toks.map((t,i)=>`<span class="tok ${i===s.toks.length-1?'new':''}">${t.replace('<','&lt;').replace('>','&gt;')}</span>`).join('')||'<span class="note">(nothing yet)</span>'}</div>`},
+ showA(a,pol){return `next token: <b class="mono">${pol.labels[a].replace('<','&lt;')}</b>`},
+ draw(c,s){c.clearRect(0,0,900,400);c.fillStyle='#F2F4F5';c.fillRect(20,20,860,360);c.font='22px Courier New,monospace';c.fillStyle=C.ink;c.textAlign='left';c.textBaseline='top';
+  c.fillText('Q: What is the capital of France?',50,50);let x=50,y=110;c.fillText('A:',x,y);x+=40;s.toks.forEach((t,i)=>{const w=c.measureText(t).width+16;if(x+w>850){x=90;y+=50}c.fillStyle=i===s.toks.length-1?C.amber:C.tealLt;c.fillRect(x,y-4,w,34);c.fillStyle=i===s.toks.length-1?'#fff':C.ink;c.fillText(t,x+8,y);x+=w+8;});
+  c.fillStyle=C.muted;c.font='17px Calibri,Carlito,sans-serif';c.fillText('reward model (at the end): +2 mentions Paris · −2 London · +0.5 ends with . or ! · −1 cut off',50,340);}};
+// Robot reacher (continuous)
+W.reach={name:'Robot reacher',max:40,
+ about:'<h3>Robot reacher — continuous actions</h3><p>State: hand position + velocity. Action: <b>two real numbers</b> (a force), not a list — so π(a|s) is a <b>bell curve</b> (Gaussian) we sample from, shown as the cloud. Reward: −distance to the target each step. Ends: touches the target (<b>terminated</b>) or 40 steps (<b>truncated</b>). VPG works the same way; the notebook only needs discrete actions.</p>',
+ reset(){return {p:[-0.7+r()*0.2,-0.5+r()*0.2],v:[0,0],T:[0.6,0.45]}},
+ mu(s){return [3*(s.T[0]-s.p[0])-2*s.v[0],3*(s.T[1]-s.p[1])-2*s.v[1]]},
+ policy(s){const m=this.mu(s);return {cont:true,mu:m,sigma:0.8}},
+ sample(pol){return [pol.mu[0]+pol.sigma*gauss(r),pol.mu[1]+pol.sigma*gauss(r)]},
+ step(s,a){const v=[0.85*s.v[0]+0.04*a[0],0.85*s.v[1]+0.04*a[1]];const p=[s.p[0]+v[0],s.p[1]+v[1]];const d=Math.hypot(s.T[0]-p[0],s.T[1]-p[1]);return {s:{p,v,T:s.T},r:-d,term:d<0.06}},
+ showS(s){return `<span class="mono">pos (${fmt(s.p[0],2)}, ${fmt(s.p[1],2)}) · vel (${fmt(s.v[0],2)}, ${fmt(s.v[1],2)})</span>`},
+ showA(a){return `<span class="mono">force (${fmt(a[0],2)}, ${fmt(a[1],2)})</span>`},
+ draw(c,s,a,d,pol){c.clearRect(0,0,900,400);c.fillStyle='#F2F4F5';c.fillRect(20,10,860,380);const X=x=>450+x*380,Y=y=>200-y*170;
+  c.strokeStyle=C.teal;c.lineWidth=3;c.beginPath();c.arc(X(s.T[0]),Y(s.T[1]),18,0,7);c.stroke();c.fillStyle=C.teal;c.font='bold 16px Calibri,Carlito,sans-serif';c.fillText('target',X(s.T[0])+24,Y(s.T[1])+5);
+  c.strokeStyle=C.grey;c.lineWidth=8;c.lineCap='round';c.beginPath();c.moveTo(X(-1.05),Y(-1.0));c.lineTo(X(s.p[0]),Y(s.p[1]));c.stroke();
+  if(pol){c.fillStyle='rgba(108,74,182,0.18)';for(let i=0;i<60;i++){const q=[pol.mu[0]+pol.sigma*gauss(r),pol.mu[1]+pol.sigma*gauss(r)];c.beginPath();c.arc(X(s.p[0])+q[0]*25,Y(s.p[1])-q[1]*25,4,0,7);c.fill();}
+   c.strokeStyle=C.purple;c.lineWidth=3;c.beginPath();c.moveTo(X(s.p[0]),Y(s.p[1]));c.lineTo(X(s.p[0])+pol.mu[0]*25,Y(s.p[1])-pol.mu[1]*25);c.stroke();}
+  if(a){c.fillStyle=C.amber;c.beginPath();c.arc(X(s.p[0])+a[0]*25,Y(s.p[1])-a[1]*25,7,0,7);c.fill();}
+  c.fillStyle=d?C.coral:C.navy;c.beginPath();c.arc(X(s.p[0]),Y(s.p[1]),13,0,7);c.fill();}};
+// ---------------- loop diagram ----------------
+function drawLoop(phase,info){const svg=$('#w_loop');svg.innerHTML='';svg.setAttribute('viewBox','0 0 900 200');
+ const on=k=>phase===k;const box=(x,t,sub,col,lt,hi)=>{S('rect',{x,y:40,width:220,height:120,rx:16,fill:lt,stroke:hi?col:'none','stroke-width':4},svg);T(svg,x+110,85,t,{anchor:'middle',size:24,bold:true,color:col});T(svg,x+110,120,sub,{anchor:'middle',size:16,color:C.muted});};
+ box(20,'Agent','policy π(a|s)',C.teal,C.tealLt,on(1)||on(2));box(660,'Environment','the world',C.amber,C.amberLt,on(3));
+ const arrow=(y,x1,x2,col,hi,label)=>{S('line',{x1,x2,y1:y,y2:y,stroke:hi?col:'#C9D0D5','stroke-width':hi?5:3,'marker-end':'url(#ah'+(hi?'h':'')+')'},svg);T(svg,(x1+x2)/2,y-16,label,{anchor:'middle',size:17,bold:true,color:hi?col:C.grey});};
+ const defs=S('defs',{},svg);[['ah','#C9D0D5'],['ahh',C.ink]].forEach(([id,f])=>{const m=S('marker',{id,viewBox:'0 0 10 10',refX:8,refY:5,markerWidth:5,markerHeight:5,orient:'auto'},defs);S('path',{d:'M0,0 L10,5 L0,10 z',fill:f},m);});
+ arrow(70,250,650,C.teal,on(2),'action a_t = '+(info.a||'?'));arrow(140,650,250,C.amber,on(3),'reward r_t = '+(info.r??'?')+'  ·  next state s_t+1');
+ T(svg,450,190,['','1 · agent sees s_t','2 · policy samples a_t','3 · world returns r_t and s_t+1','4 · episode over?'][phase]||'',{anchor:'middle',size:16,color:C.muted,italic:true});}
+// ---------------- engine ----------------
+let world='cart',w=W[world],s,t,G,done,tape,lastA=null,lastPol=null,timer=null;
+function reset(){s=w.reset();t=0;G=0;done=false;tape=[];lastA=null;lastPol=w.policy(s);$('#w_about').innerHTML=w.about;$('#v_a').innerHTML='—';$('#v_r').innerHTML='—';render(1,{});}
+function polSvg(pol){const svg=$('#w_pol');svg.innerHTML='';
+ if(pol.cont){svg.setAttribute('viewBox','0 0 360 70');T(svg,6,22,'Gaussian: mean μ = ('+fmt(pol.mu[0],2)+', '+fmt(pol.mu[1],2)+')',{size:15});T(svg,6,50,'spread σ = '+pol.sigma+'  (purple cloud on the left)',{size:15,color:C.muted});return;}
+ const n=pol.probs.length,bw=Math.min(70,340/n-8);svg.setAttribute('viewBox','0 0 360 130');pol.probs.forEach((p,i)=>{const x=6+i*(bw+8);const h=p*80;S('rect',{x,y:95-h,width:bw,height:h,fill:lastA===i&&lastPol===pol?C.amber:C.teal,rx:4},svg);T(svg,x+bw/2,88-h,(p*100).toFixed(0)+'%',{anchor:'middle',size:13,bold:true});T(svg,x+bw/2,112,pol.labels[i].replace('<eos>','eos'),{anchor:'middle',size:13,color:C.muted});});}
+function render(phase,info){const c=$('#w_cv').getContext('2d');w.draw(c,s,lastA!=null&&w.reach&&world==='reach'?lastA:lastA,done,lastPol);
+ drawLoop(phase,info);$('#v_t').textContent=t;$('#v_s').innerHTML=w.showS(s);polSvg(lastPol);
+ $('#v_G').textContent=fmt(G,2);
+ if(done){const tr=info.trunc;$('#v_st').innerHTML=`<span class="stamp" style="background:${tr?'var(--amber-lt)':'var(--coral-lt)'};color:${tr?'var(--amber)':'var(--coral)'}">${tr?'TRUNCATED — clock ran out':'TERMINATED — episode over'}</span>`;}
+ else $('#v_st').innerHTML='<span class="stamp" style="background:var(--teal-lt);color:var(--teal)">running</span>';
+ $('#w_tape').innerHTML='<table class="t" style="width:100%"><tr><th>t</th><th>action</th><th>r<sub>t</sub></th><th>done</th></tr>'+tape.slice(-8).map(x=>`<tr><td>${x.t}</td><td>${x.a}</td><td>${x.r}</td><td>${x.d}</td></tr>`).join('')+'</table>';}
+function sampleAct(pol){if(pol.cont)return w.sample(pol);const u=r();let a=0,cum=pol.probs[0];while(u>cum&&a<pol.probs.length-1){a++;cum+=pol.probs[a]}return a}
+async function doStep(animate){if(done)return;const ms=+$('#w_speed').value;const pol=w.policy(s);lastPol=pol;
+ if(animate&&ms>300){render(1,{});await new Promise(x=>setTimeout(x,ms/3));}
+ const a=sampleAct(pol);lastA=a;const aTxt=pol.cont?w.showA(a).replace(/<[^>]+>/g,''):(pol.labels[a]);
+ if(animate&&ms>300){render(2,{a:aTxt});$('#v_a').innerHTML=w.showA(a,pol);await new Promise(x=>setTimeout(x,ms/3));}
+ const o=w.step(s,a,pol,t);s=o.s;t++;G+=o.r;const trunc=!o.term&&t>=w.max;done=o.term||trunc;
+ tape.push({t:t-1,a:aTxt,r:fmt(o.r,2),d:done?(trunc?'truncated':'terminated'):'—'});
+ $('#v_a').innerHTML=w.showA(a,pol);$('#v_r').innerHTML=`<b>${fmt(o.r,2)}</b>`+(world==='chat'&&!done?' <span class="note">(nothing until the end)</span>':'');
+ lastPol=done?pol:w.policy(s);if(!done)lastA=null;render(done?4:3,{a:aTxt,r:fmt(o.r,2),trunc});}
+$('#w_step').onclick=()=>doStep(true);
+$('#w_ff').onclick=()=>{for(let i=0;i<20&&!done;i++){const pol=w.policy(s);const a=sampleAct(pol);const o=w.step(s,a,pol,t);s=o.s;t++;G+=o.r;const tr=!o.term&&t>=w.max;done=o.term||tr;tape.push({t:t-1,a:pol.cont?'force':pol.labels[a],r:fmt(o.r,2),d:done?(tr?'truncated':'terminated'):'—'});if(done){lastPol=pol;lastA=a;$('#v_a').innerHTML=w.showA(a,pol);$('#v_r').innerHTML='<b>'+fmt(o.r,2)+'</b>';render(4,{trunc:tr,a:pol.cont?'force':pol.labels[a],r:fmt(o.r,2)});return;}}lastPol=w.policy(s);lastA=null;render(1,{});};
+$('#w_play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('#w_play').textContent='▶ play';return}$('#w_play').textContent='❚❚ pause';let busy=false;timer=setInterval(async()=>{if(busy)return;if(done){clearInterval(timer);timer=null;$('#w_play').textContent='▶ play';return}busy=true;await doStep(true);busy=false;},+$('#w_speed').value+50);};
+$('#w_reset').onclick=reset;
+$('#worlds').innerHTML=Object.entries(W).map(([k,v])=>`<button data-w="${k}" class="${k===world?'on':''}">${v.name}</button>`).join('');
+$$('#worlds button').forEach(b=>b.onclick=()=>{world=b.dataset.w;w=W[world];$$('#worlds button').forEach(x=>x.classList.toggle('on',x===b));if(timer){clearInterval(timer);timer=null;$('#w_play').textContent='▶ play'}reset();});
+reset();
+
+})();
+</script><!--presenter-->
+<style>
+.placard.pc>h3{cursor:pointer}
+.placard.pc>h3::after{content:" ▸";font-weight:400;opacity:.45}
+.placard.pc.open>h3::after{content:" ▾"}
+.placard.pc:not(.open)>*:not(h3){display:none}
+.placard.pc:not(.open){padding-bottom:10px}
+.placard.pc:not(.open)>h3{margin:0}
+#pnote{position:fixed;right:14px;bottom:12px;font:12px system-ui,sans-serif;color:#8a90a0;background:#fff;border:1px solid #e3e5ea;border-radius:8px;padding:4px 9px;cursor:pointer;z-index:99}
+</style>
+<script>
+(function(){
+  function setup(){
+    document.querySelectorAll('.placard').forEach(function(p){
+      if(p.classList.contains('pc')||p.id||p.querySelector('[id]')) return;
+      if(p.querySelector('table,canvas,svg,input,select,button,textarea,pre')) return;
+      var h=p.querySelector(':scope>h3'); if(!h) return;
+      var kids=[].slice.call(p.children).filter(function(c){return c!==h});
+      if(!kids.length) return;
+      p.classList.add('pc');
+      h.addEventListener('click',function(){p.classList.toggle('open')});
+    });
+  }
+  var all=false;
+  function toggleAll(){all=!all;document.querySelectorAll('.placard.pc').forEach(function(p){p.classList.toggle('open',all)});}
+  document.addEventListener('keydown',function(e){if((e.key==='n'||e.key==='N')&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){toggleAll();}});
+  window.addEventListener('load',function(){
+    setup();
+    var b=document.createElement('div');b.id='pnote';b.textContent='notes: click a heading · N = all';b.onclick=toggleAll;document.body.appendChild(b);
+    new MutationObserver(setup).observe(document.body,{childList:true,subtree:true});
+  });
+})();
+</script>
+</body></html>
